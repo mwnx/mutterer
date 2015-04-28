@@ -141,16 +141,16 @@ subst()
     # [[ ! "$str" =~ (^|[^\\])\$'{'?_ ]] || parse_error "Variables starting with '_' are reserved."
 
     while true; do
-        if [[ "$str" =~ ^(.*(^|[^%]))%'{'($r_word(\.$r_word)*)(.*)$ ]]; then
+        if [[ "$str" =~ ^(.*)%'{'($r_word(\.$r_word)*)(.*)$ ]]; then
             local end_bracket=
-        elif [[ "$str" =~ ^(.*(^|[^%]))%($r_word)()(.*)$ ]]; then
+        elif [[ "$str" =~ ^(.*)%($r_word)()(.*)$ ]]; then
             local end_bracket='}'
         else
             break
         fi
-        local key=accounts.${account}.${BASH_REMATCH[3]}
+        local key=accounts.${account}.${BASH_REMATCH[2]}
         # [[ -n "${settings[$key]+_}" ]] || parse_error "Element '$key' is undefined."
-        str="${BASH_REMATCH[1]}\${settings[$key]$end_bracket${BASH_REMATCH[5]}"
+        str="${BASH_REMATCH[1]}\${settings[$key]$end_bracket${BASH_REMATCH[4]}"
     done
     printf '%s\n' "$str"
     #TODO: deal with other accessible variables (add __ in front of everything)
