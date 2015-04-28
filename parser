@@ -1,0 +1,373 @@
+#!/bin/bash -e
+
+set -u
+DEBUG=${DEBUG-off}
+
+# current section and entry
+section=()
+entry_lhs=
+entry_eq=
+entry_rhs=
+declare -A settings=()
+declare -A groups=()
+declare -A accounts=()
+linenum=0
+
+nl='
+'
+
+#regexes:
+r_word='[a-zA-Z_-][a-zA-Z0-9_-]*'
+#r_words="($r_word[[:space:]]*)+"
+
+# group_accounts groupname; return space-seperated list of accounts
+group_accounts()
+{
+    # if [[ "$1" == all ]]; then
+    #     echo ${accounts[*]}
+    if [[ -z "${groups[$1]}" ]]; then
+        error "Group '$1' has not been declared."
+    else
+        printf '%s\n' "${groups[$1]}"
+    fi
+}
+
+error()
+{
+    printf 'Error: %s\n' "$*" 1>&2
+    exit 1
+}
+
+# error message
+parse_error()
+{
+    error "line $linenum: $*"
+}
+
+debug()
+{
+    if [[ "$DEBUG" == on ]]; then printf '%s\n' "$*"; fi
+}
+
+printn()
+{
+    printf '%s\n' "$*"
+}
+
+incr_linenum()
+{
+    linenum=$((linenum + 1))
+}
+
+_unread_line=
+unread_line()
+{
+    [[ -z $_unread_line ]] || parse_error 'An "unread" line is already buffered!'
+    _unread_line="$1"
+}
+
+read_line()
+{
+    if [[ -n "$_unread_line" ]]; then
+        REPLY=$_unread_line
+        _unread_line=
+    else
+        read -r || return 1
+        incr_linenum
+    fi
+}
+
+# is_empty_line line : whether line is empty (comment lines are considered empty)
+is_empty_line()
+{
+    [[ "$1" =~ ^[[:space:]]*('#'.*)?$ ]]
+}
+
+read_first_non_empty_line()
+{
+    while read_line; do
+        if ! is_empty_line "$REPLY"; then return 0; fi
+    done
+    return 1
+}
+
+# parse_section_title line
+parse_section_title()
+{
+    [[ "$1" =~ ^\[($r_word)([[:space:]]+(($r_word[[:space:]]*)+))?\]$ ]] &&
+    section=("${BASH_REMATCH[1]}" "${BASH_REMATCH[3]}")
+}
+
+# parse_entry entry
+parse_entry()
+{
+    [[ "$1" =~ ^($r_word(\.[^?~+=[:space:]]+([[:space:]]+[^?~+=[:space:]]+)*)*)[[:space:]]*(\??~?\+?=)[[:space:]]*(.*)$ ]] &&
+    {
+        entry_lhs=$(sed 's/\s\+/ /g' <<<"${BASH_REMATCH[1]}")
+        entry_eq=${BASH_REMATCH[4]}
+        entry_rhs=${BASH_REMATCH[5]}
+    }
+}
+
+# parse_group entry_line
+parse_group()
+{
+    parse_entry "$1" || return 1
+
+    [[ "$entry_lhs" =~ ^$r_word$ ]] || parse_error "Expecting simple word as group name."
+    [[ "$entry_eq" == '=' ]] || parse_error "Expecting '='."
+    [[ "$entry_rhs" =~ ^$r_word(,$r_word)*$ ]] \
+        || parse_error "Expecting comma separated account name list."
+
+    groups[$entry_lhs]=$(tr ',' ' ' <<< "$entry_rhs")
+}
+
+parse_groups()
+{
+    while read_first_non_empty_line; do
+        parse_group "$REPLY" || { unread_line "$REPLY"; break; }
+    done
+}
+
+# subst account str : substitute %{...} or %... variables
+subst()
+{
+    local account=$1
+    local str=$2
+
+    # # False positives when a variable pattern (${?...) is inside single quotes but... whatever...
+    # # Also, false negatives if someone uses eval to concatenate a '$' and a variable name...
+    # # Not much can be done about that.
+    # [[ ! "$str" =~ (^|[^\\])\$'{'?_ ]] || parse_error "Variables starting with '_' are reserved."
+
+    while true; do
+        if [[ "$str" =~ ^(.*(^|[^%]))%'{'($r_word(\.$r_word)*)(.*)$ ]]; then
+            local end_bracket=
+        elif [[ "$str" =~ ^(.*(^|[^%]))%($r_word)()(.*)$ ]]; then
+            local end_bracket='}'
+        else
+            break
+        fi
+        local key=accounts.${account}.${BASH_REMATCH[3]}
+        # [[ -n "${settings[$key]+_}" ]] || parse_error "Element '$key' is undefined."
+        str="${BASH_REMATCH[1]}\${settings[$key]$end_bracket${BASH_REMATCH[5]}"
+    done
+    printf '%s\n' "$str"
+    #TODO: deal with other accessible variables (add __ in front of everything)
+}
+
+# subst_eval account str
+subst_eval()
+{
+    local str=$(subst "$@")
+
+    # Can't catch errors raised from subexpressions directly (e.g. echo "$(...)"), hence the hack.
+    {
+        { eval printn "$str" 2>&1>&3 | grep '^.\+$'; } \
+        && parse_error 'Error evaluating bash expression.'
+    } 3>&1 1>&2 || true
+}
+
+# entry_append key val
+entry_append()
+{
+    settings[$1]+=$(printf '\n%s' "$2")
+    debug "$1 = ${settings[$1]}"
+}
+
+# entry_assign key val
+entry_assign()
+{
+    settings[$1]=$2
+    debug "$1 = ${settings[$1]}"
+}
+
+# process_entry_with_account account (reads entry_{lhs,eq,rhs})
+process_entry_with_account()
+{
+    local account=$1
+    local key=accounts.${account}.$(subst_eval "$account" "$entry_lhs")
+    local rhs=$(subst_eval "$account" "$entry_rhs")
+    case "${entry_eq}" in
+           =) ;;
+         \?=) [[ -z "${settings[$key]-}" ]] || return 0;;
+          ~=) [[ -n "$entry_rhs" ]] || { unset settings[$key]; return 0; };;
+        \?~=) [[ -z "${settings[$key]-}" && -n "$rhs" ]] || return 0;;
+          +=) entry_append "$key" "$rhs"; return 0;;
+           *) parse_error "Unknown assignment type: '${entry_eq}'.";;
+    esac
+    entry_assign "$key" "$rhs"
+}
+
+# init_account account_name
+init_account()
+{
+    if [[ -z "${accounts[$1]+_}" ]]; then
+        accounts[$1]=
+        settings[accounts.${1}.id]=${1}
+    fi
+}
+
+# init_accounts account_names...
+init_accounts() 
+{
+    for i in "$@"; do init_account "$i"; done
+}
+
+# parse_accounts account_names...
+parse_accounts()
+{
+    init_accounts "$@"
+    while read_first_non_empty_line; do
+        if parse_entry "$REPLY"; then
+            for a in "$@"; do
+                process_entry_with_account "$a"
+            done
+        else
+            unread_line "$REPLY"
+            break
+        fi
+    done
+}
+
+# parse_section (read from stdin)
+parse_section()
+{
+    read_first_non_empty_line || return 1
+    parse_section_title "$REPLY" || return 1
+
+    local section_type=${section[0]}
+    case "${section[0]}" in
+        groups)   parse_groups;;
+        account)  [[ "${section[1]}" =~ ^$r_word$ ]] ||
+                  parse_error "Account name must be a simple word; '${section[1]}' invalid."
+                  parse_accounts ${section[1]};;
+        accounts) parse_accounts $(group_accounts ${section[1]});;
+        *)        parse_error "Invalid section type: '${section[0]}'.";;
+    esac
+}
+
+parse_file()
+{
+    while parse_section; do true; done
+    if read_line; then parse_error "Unparsed line."; fi
+}
+
+# --- Printing (reads settings and accounts arrays) ------------------------------------------------
+
+configs_dir=~/.mutterer/configs
+
+keys()
+{
+    for k in "${!settings[@]}"; do printf '%s\n' "$k"; done
+}
+
+# # grep_keys grep_expr...
+# grep_keys()
+# {
+#     local IFS=$nl
+#     keys | grep "$@"
+# }
+
+# print_multi_field lhs nl_separated_rhss (>stdout) : print a field with multiple lines
+print_multi_field()
+{
+    local IFS=$nl
+    for i in $2; do printf '%s\n' "$1 $i"; done
+}
+
+# print_mutt_field lhs rhs
+print_mutt_field()
+{
+    if [[ "$1" =~ ' ' ]]; then
+        print_multi_field "$1" "$2"
+    else
+        printf '%s\n' "set $1 = $2"
+    fi
+}
+
+print_MUTT()
+{
+    for k in "${!settings[@]}"; do
+        if [[ "$k" =~ ^accounts\.[^.]+\.MUTT\.(.*)$ ]]; then
+            print_mutt_field "${BASH_REMATCH[1]}" "${settings[$k]}"
+        fi
+    done >"$configs_dir/muttrc"
+}
+
+print_mutt()
+{
+    for a in "${!accounts[@]}"; do
+        mkdir -p "$configs_dir/_$a"
+        local dir=.mutterer/configs/_$a
+        mkdir -p "$dir"
+        for k in "${!settings[@]}"; do
+            if [[ "$k" =~ ^accounts\.${a}\.mutt\.(.*)$ ]]; then
+                print_mutt_field "${BASH_REMATCH[1]}" "${settings[$k]}"
+            fi
+        done >"$configs_dir/_$a/muttrc"
+    done
+}
+
+print_smtp()
+{
+    for a in "${!accounts[@]}"; do
+            printf 'account %s\n' "$a"
+            for k in "${!settings[@]}"; do
+                if [[ "$k" =~ ^accounts\.${a}\.smtp\.(.*)$ ]]; then
+                    printf '%s %s\n' "${BASH_REMATCH[1]}" "${settings[$k]}"
+                fi
+            done
+            printf '\n'
+    done >"$configs_dir/msmtprc"
+}
+
+cur_imap_section=
+
+# print_imap_field prefix lhs rhs
+print_imap_field()
+{
+    local prefix=$1
+    local lhs=$2
+    local rhs=$3
+    [[ "$lhs" =~ ^$prefix($r_word(\ $r_word)*)\.($r_word)$ ]] \
+        || error "Bad key: '$lhs'."
+    local s=${BASH_REMATCH[1]}
+    [[ "$cur_imap_section" == "$s" ]] \
+        || { cur_imap_section=$s; printf '\n[%s]\n' "$s"; }
+    printf '%s = %s\n' "${BASH_REMATCH[3]}" "$rhs"
+}
+
+# print_IMAP()
+# {
+#     local IFS=$nl
+#     local ks=$(keys | grep '^accounts\.[^.]\+\.IMAP\.')
+#     for k in $ks; do
+#         print_imap_field 'accounts\.[^.]+\.IMAP\.' "$k" "${settings[$k]}"
+#     done
+# }
+
+print_imap()
+{
+    {
+        printf '[general]\n'
+        printf 'accounts = %s\n' "$(tr ' ' ',' <<<"${!accounts[@]}")"
+        local IFS=$nl
+        local Ks=$(keys | grep '^accounts\.[^.]\+\.imap\.')
+        for a in "${!accounts[@]}"; do
+            local ks=$(grep "^accounts\.${a}\." <<<"$Ks" | sort)
+            for k in $ks; do
+                print_imap_field "accounts\.${a}\.imap\." "$k" "${settings[$k]}"
+            done
+        done
+    } >"$configs_dir/offlineimaprc"
+}
+
+print_settings()
+{
+    mkdir -p "$configs_dir"
+    print_MUTT
+    print_mutt
+    print_smtp
+    print_imap
+}
