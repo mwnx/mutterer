@@ -1,7 +1,18 @@
 #!/bin/bash -e
 
 set -u
+
 DEBUG=${DEBUG-off}
+MUTTERERRC=${MUTTERERRC-~/.muttererrc}
+MUTTERER_DIR=${MUTTERER_DIR-~/.mutterer}
+
+MUTTRC=${MUTTRC-~/.muttrc}
+MUTTRC2=${MUTTRC2-~/.mutt/muttrc}
+OFFLINEIMAPRC=${OFFLINEIMAPRC-~/.offlineimaprc}
+OFFLINEIMAPLOCK=${OFFLINEIMAPLOCK-~/.offlineimap/lock}
+MSMTPRC=${MSMTPRC-~/.msmtprc}
+
+TOP_PID=$$
 
 # current section and entry
 section=()
@@ -18,24 +29,24 @@ nl='
 
 #regexes:
 r_word='[a-zA-Z_-][a-zA-Z0-9_-]*'
-#r_words="($r_word[[:space:]]*)+"
+
+error()
+{
+    printf 'Error: %s\n' "$*" 1>&2
+    kill "$TOP_PID"
+    exit 1
+}
 
 # group_accounts groupname; return space-seperated list of accounts
 group_accounts()
 {
     # if [[ "$1" == all ]]; then
     #     echo ${accounts[*]}
-    if [[ -z "${groups[$1]}" ]]; then
-        error "Group '$1' has not been declared."
-    else
-        printf '%s\n' "${groups[$1]}"
-    fi
-}
-
-error()
-{
-    printf 'Error: %s\n' "$*" 1>&2
-    exit 1
+    # if [[ -z "${groups[$1]-}" ]]; then
+    #     parse_error "Group '$1' has not been declared."
+    # else
+        printf '%s\n' "${groups[$1]-}"
+    # fi
 }
 
 # error message
@@ -250,24 +261,17 @@ parse_section()
 parse_file()
 {
     while parse_section; do true; done
-    if read_line; then parse_error "Unparsed line."; fi
+    if read_line; then parse_error "Invalid syntax."; fi
 }
 
-# --- Printing (reads settings and accounts arrays) ------------------------------------------------
+# --- Printing (reads 'settings' and 'accounts' arrays) --------------------------------------------
 
-configs_dir=~/.mutterer/configs
+configs_dir=$MUTTERER_DIR/configs
 
 keys()
 {
     for k in "${!settings[@]}"; do printf '%s\n' "$k"; done
 }
-
-# # grep_keys grep_expr...
-# grep_keys()
-# {
-#     local IFS=$nl
-#     keys | grep "$@"
-# }
 
 # print_multi_field lhs nl_separated_rhss (>stdout) : print a field with multiple lines
 print_multi_field()
@@ -288,11 +292,14 @@ print_mutt_field()
 
 print_MUTT()
 {
-    for k in "${!settings[@]}"; do
-        if [[ "$k" =~ ^accounts\.[^.]+\.MUTT\.(.*)$ ]]; then
-            print_mutt_field "${BASH_REMATCH[1]}" "${settings[$k]}"
-        fi
-    done >"$configs_dir/muttrc"
+    {
+        for k in "${!settings[@]}"; do
+            if [[ "$k" =~ ^accounts\.[^.]+\.MUTT\.(.*)$ ]]; then
+                print_mutt_field "${BASH_REMATCH[1]}" "${settings[$k]}"
+            fi
+        done
+        printf '\nsource %s\n' "$MUTTRC2"
+    } >"$configs_dir/muttrc"
 }
 
 print_mutt()
@@ -371,3 +378,46 @@ print_settings()
     print_smtp
     print_imap
 }
+
+# --- Installing -----------------------------------------------------------------------------------
+
+# _install : CALL WITH OFFLINEIMAP LOCKED
+_install()
+{
+    cp "$configs_dir"/muttrc "$MUTTRC"
+    cp "$configs_dir"/offlineimaprc "$OFFLINEIMAPRC"
+    cp "$configs_dir"/msmtprc "$MSMTPRC"
+}
+
+make()
+{
+    {
+        flock -n 9 || error "Couldn't capture offlineimap lock. Exiting."
+        parse_file <"$MUTTERERRC"
+        print_settings
+        _install
+    } 9>"$OFFLINEIMAPLOCK"
+}
+
+updated()
+{
+    [[ "$MUTTERERRC" -nt "$MUTTRC" ]]
+}
+
+make_if_updated()
+{
+    if updated; then
+        echo 'Mutterer: updating config...' 1>&2
+        make
+    fi
+}
+
+# --- Running --------------------------------------------------------------------------------------
+
+case "${1-}" in
+    install) make;;
+    mutt)    shift; make_if_updated; mutt "$@";;
+    imap)    shift; make_if_updated; offlineimap "$@";;
+    smtp)   shift; make_if_updated; msmtp "$@";;
+    *)       make_if_updated; mutt "$@";;
+esac
