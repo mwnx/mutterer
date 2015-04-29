@@ -22,7 +22,9 @@ make()
 
 updated()
 {
-    [[ "$MUTTERERRC" -nt "$MUTTRC" ]]
+    [[ "$MUTTERERRC" -nt "$MUTTRC" ]] ||
+    [[ "$MUTTERERRC" -nt "$OFFLINEIMAPRC" ]] ||
+    [[ "$MUTTERERRC" -nt "$MSMTPRC" ]]
 }
 
 make_if_updated()
