@@ -1,0 +1,17 @@
+#!/bin/bash -e
+
+# --- Mutterer common elements ---
+
+. common
+
+MUTTERERRC=${MUTTERERRC-~/.muttererrc}
+MUTTERER_DIR=${MUTTERER_DIR-~/.mutterer}
+
+MUTTRC=${MUTTRC-~/.muttrc}
+MUTTRC2=${MUTTRC2-~/.mutt/muttrc}
+OFFLINEIMAPRC=${OFFLINEIMAPRC-~/.offlineimaprc}
+OFFLINEIMAPLOCK=${OFFLINEIMAPLOCK-~/.offlineimap/lock}
+MSMTPRC=${MSMTPRC-~/.msmtprc}
+
+declare -A groups=()
+declare -A accounts=()

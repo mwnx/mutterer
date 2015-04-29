@@ -1,0 +1,34 @@
+#!/bin/bash -e
+
+# --- Mutterer Installing ---
+
+# _install : CALL WITH OFFLINEIMAP LOCKED
+_install()
+{
+    cp "$configs_dir"/muttrc "$MUTTRC"
+    cp "$configs_dir"/offlineimaprc "$OFFLINEIMAPRC"
+    cp "$configs_dir"/msmtprc "$MSMTPRC"
+}
+
+make()
+{
+    {
+        flock -n 9 || error "Couldn't capture offlineimap lock. Exiting."
+        parse_file <"$MUTTERERRC"
+        print_settings
+        _install
+    } 9>"$OFFLINEIMAPLOCK"
+}
+
+updated()
+{
+    [[ "$MUTTERERRC" -nt "$MUTTRC" ]]
+}
+
+make_if_updated()
+{
+    if updated; then
+        echo 'Mutterer: updating config...' 1>&2
+        make
+    fi
+}

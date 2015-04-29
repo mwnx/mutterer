@@ -1,63 +1,22 @@
 #!/bin/bash -e
 
-set -u
+# --- Mutterer parsing ---
 
-DEBUG=${DEBUG-off}
-MUTTERERRC=${MUTTERERRC-~/.muttererrc}
-MUTTERER_DIR=${MUTTERER_DIR-~/.mutterer}
-
-MUTTRC=${MUTTRC-~/.muttrc}
-MUTTRC2=${MUTTRC2-~/.mutt/muttrc}
-OFFLINEIMAPRC=${OFFLINEIMAPRC-~/.offlineimaprc}
-OFFLINEIMAPLOCK=${OFFLINEIMAPLOCK-~/.offlineimap/lock}
-MSMTPRC=${MSMTPRC-~/.msmtprc}
-
-TOP_PID=$$
-
-# current section and entry
-section=()
-entry_lhs=
-entry_eq=
-entry_rhs=
-declare -A settings=()
-declare -A groups=()
-declare -A accounts=()
 linenum=0
-
-nl='
-'
 
 #regexes:
 r_word='[a-zA-Z_-][a-zA-Z0-9_-]*'
 
-error()
-{
-    printf 'Error: %s\n' "$*" 1>&2
-    kill "$TOP_PID"
-    exit 1
-}
-
 # group_accounts groupname; return space-seperated list of accounts
 group_accounts()
 {
-    # if [[ "$1" == all ]]; then
-    #     echo ${accounts[*]}
-    # if [[ -z "${groups[$1]-}" ]]; then
-    #     parse_error "Group '$1' has not been declared."
-    # else
-        printf '%s\n' "${groups[$1]-}"
-    # fi
+    printf '%s\n' "${groups[$1]-}"
 }
 
 # error message
 parse_error()
 {
     error "line $linenum: $*"
-}
-
-debug()
-{
-    if [[ "$DEBUG" == on ]]; then printf '%s\n' "$*"; fi
 }
 
 printn()
@@ -264,160 +223,4 @@ parse_file()
     if read_line; then parse_error "Invalid syntax."; fi
 }
 
-# --- Printing (reads 'settings' and 'accounts' arrays) --------------------------------------------
 
-configs_dir=$MUTTERER_DIR/configs
-
-keys()
-{
-    for k in "${!settings[@]}"; do printf '%s\n' "$k"; done
-}
-
-# print_multi_field lhs nl_separated_rhss (>stdout) : print a field with multiple lines
-print_multi_field()
-{
-    local IFS=$nl
-    for i in $2; do printf '%s\n' "$1 $i"; done
-}
-
-# print_mutt_field lhs rhs
-print_mutt_field()
-{
-    if [[ "$1" =~ ' ' ]]; then
-        print_multi_field "$1" "$2"
-    else
-        printf '%s\n' "set $1 = $2"
-    fi
-}
-
-print_MUTT()
-{
-    {
-        for k in "${!settings[@]}"; do
-            if [[ "$k" =~ ^accounts\.[^.]+\.MUTT\.(.*)$ ]]; then
-                print_mutt_field "${BASH_REMATCH[1]}" "${settings[$k]}"
-            fi
-        done
-        printf '\nsource %s\n' "$MUTTRC2"
-    } >"$configs_dir/muttrc"
-}
-
-print_mutt()
-{
-    for a in "${!accounts[@]}"; do
-        mkdir -p "$configs_dir/_$a"
-        local dir=.mutterer/configs/_$a
-        mkdir -p "$dir"
-        for k in "${!settings[@]}"; do
-            if [[ "$k" =~ ^accounts\.${a}\.mutt\.(.*)$ ]]; then
-                print_mutt_field "${BASH_REMATCH[1]}" "${settings[$k]}"
-            fi
-        done >"$configs_dir/_$a/muttrc"
-    done
-}
-
-print_smtp()
-{
-    for a in "${!accounts[@]}"; do
-            printf 'account %s\n' "$a"
-            for k in "${!settings[@]}"; do
-                if [[ "$k" =~ ^accounts\.${a}\.smtp\.(.*)$ ]]; then
-                    printf '%s %s\n' "${BASH_REMATCH[1]}" "${settings[$k]}"
-                fi
-            done
-            printf '\n'
-    done >"$configs_dir/msmtprc"
-}
-
-cur_imap_section=
-
-# print_imap_field prefix lhs rhs
-print_imap_field()
-{
-    local prefix=$1
-    local lhs=$2
-    local rhs=$3
-    [[ "$lhs" =~ ^$prefix($r_word(\ $r_word)*)\.($r_word)$ ]] \
-        || error "Bad key: '$lhs'."
-    local s=${BASH_REMATCH[1]}
-    [[ "$cur_imap_section" == "$s" ]] \
-        || { cur_imap_section=$s; printf '\n[%s]\n' "$s"; }
-    printf '%s = %s\n' "${BASH_REMATCH[3]}" "$rhs"
-}
-
-# print_IMAP()
-# {
-#     local IFS=$nl
-#     local ks=$(keys | grep '^accounts\.[^.]\+\.IMAP\.')
-#     for k in $ks; do
-#         print_imap_field 'accounts\.[^.]+\.IMAP\.' "$k" "${settings[$k]}"
-#     done
-# }
-
-print_imap()
-{
-    {
-        printf '[general]\n'
-        printf 'accounts = %s\n' "$(tr ' ' ',' <<<"${!accounts[@]}")"
-        local IFS=$nl
-        local Ks=$(keys | grep '^accounts\.[^.]\+\.imap\.')
-        for a in "${!accounts[@]}"; do
-            local ks=$(grep "^accounts\.${a}\." <<<"$Ks" | sort)
-            for k in $ks; do
-                print_imap_field "accounts\.${a}\.imap\." "$k" "${settings[$k]}"
-            done
-        done
-    } >"$configs_dir/offlineimaprc"
-}
-
-print_settings()
-{
-    mkdir -p "$configs_dir"
-    print_MUTT
-    print_mutt
-    print_smtp
-    print_imap
-}
-
-# --- Installing -----------------------------------------------------------------------------------
-
-# _install : CALL WITH OFFLINEIMAP LOCKED
-_install()
-{
-    cp "$configs_dir"/muttrc "$MUTTRC"
-    cp "$configs_dir"/offlineimaprc "$OFFLINEIMAPRC"
-    cp "$configs_dir"/msmtprc "$MSMTPRC"
-}
-
-make()
-{
-    {
-        flock -n 9 || error "Couldn't capture offlineimap lock. Exiting."
-        parse_file <"$MUTTERERRC"
-        print_settings
-        _install
-    } 9>"$OFFLINEIMAPLOCK"
-}
-
-updated()
-{
-    [[ "$MUTTERERRC" -nt "$MUTTRC" ]]
-}
-
-make_if_updated()
-{
-    if updated; then
-        echo 'Mutterer: updating config...' 1>&2
-        make
-    fi
-}
-
-# --- Running --------------------------------------------------------------------------------------
-
-case "${1-}" in
-    install) make;;
-    mutt)    shift; make_if_updated; mutt "$@";;
-    imap)    shift; make_if_updated; offlineimap "$@";;
-    smtp)   shift; make_if_updated; msmtp "$@";;
-    *)       make_if_updated; mutt "$@";;
-esac

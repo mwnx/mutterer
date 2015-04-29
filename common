@@ -1,0 +1,30 @@
+#!/bin/bash -e
+
+# --- Mutterer generic common elements ---
+
+set -u
+nl='
+'
+
+DEBUG=${DEBUG-off}
+TOP_PID=$$
+
+# current section and entry
+section=()
+entry_lhs=
+entry_eq=
+entry_rhs=
+
+declare -A settings=()
+
+error()
+{
+    printf 'Error: %s\n' "$*" 1>&2
+    kill "$TOP_PID"
+    exit 1
+}
+
+debug()
+{
+    if [[ "$DEBUG" == on ]]; then printf '%s\n' "$*"; fi
+}

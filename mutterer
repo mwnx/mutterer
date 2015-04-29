@@ -1,0 +1,19 @@
+#!/bin/bash -e
+# mutterer [install|mutt|imap|smtp] [options...]
+
+cd "$(dirname "$0")"
+
+. m_common
+. m_parser
+. m_printer
+. m_installer
+
+cd -
+
+case "${1-}" in
+    install) make;;
+    mutt)    shift; make_if_updated; mutt "$@";;
+    imap)    shift; make_if_updated; offlineimap "$@";;
+    smtp)    shift; make_if_updated; msmtp "$@";;
+    *)       make_if_updated; mutt "$@";;
+esac
