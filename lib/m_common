@@ -2,7 +2,7 @@
 
 # --- Mutterer common elements ---
 
-. common
+. "$MUTTERER_LIBS/common"
 
 MUTTERERRC=${MUTTERERRC-~/.muttererrc}
 MUTTERER_DIR=${MUTTERER_DIR-~/.mutterer}

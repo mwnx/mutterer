@@ -1,14 +1,12 @@
 #!/bin/bash -e
 # mutterer [install|mutt|imap|smtp] [options...]
 
-cd "$(dirname "$0")"
+: ${MUTTERER_LIBS=$(dirname "$0")/lib}
 
-. m_common
-. m_parser
-. m_printer
-. m_installer
-
-cd -
+. "$MUTTERER_LIBS/m_common"
+. "$MUTTERER_LIBS/m_parser"
+. "$MUTTERER_LIBS/m_printer"
+. "$MUTTERER_LIBS/m_installer"
 
 case "${1-}" in
     install) make;;
