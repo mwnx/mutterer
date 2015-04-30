@@ -43,7 +43,7 @@ mutt.trash                     ?= %box/[Tt][Rr][Aa][Ss][Hh]
 mutt.mbox_type                 ?= Maildir
 goto_account_key               ?= g
 MUTT.macro index,pager         += %{goto_account_key}%{account_key} "\"<change-folder>%{mutt.spoolfile}\n\""
-MUTT.folder-hook \"%{box}\"/\*  = source ~/.mutterer/configs/_%{id}/muttrc
+MUTT.folder-hook \"%{box}/\"/\*  = source ~/.mutterer/configs/_%{id}/muttrc
 
 [accounts %{mutt_defaults_extra:-}]
 goto_subdir_key        ?= _
