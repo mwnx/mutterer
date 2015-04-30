@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -e -u
+
+. "$configs_dir/script.bash"
+
+. "$MUTTERER_LIBS"/m_common
+. "$MUTTERER_LIBS"/m_printer
+
+print_settings

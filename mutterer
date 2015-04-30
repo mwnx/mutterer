@@ -1,7 +1,9 @@
-#!/bin/bash -e
+#!/bin/bash
 # mutterer [install|mutt|imap|smtp] [options...]
 
-: ${MUTTERER_LIBS=$(dirname "$0")/lib}
+set -e -u
+
+export MUTTERER_LIBS="${MUTTERER_LIBS-$(dirname "$0")/lib}"
 
 . "$MUTTERER_LIBS/m_common"
 . "$MUTTERER_LIBS/m_parser"

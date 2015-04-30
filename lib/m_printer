@@ -93,8 +93,16 @@ print_imap_field()
 print_imap()
 {
     {
+        local imap_order=${settings[general.imap_order]-${!accounts[@]}}
         printf '[general]\n'
-        printf 'accounts = %s\n' "$(tr ' ' ',' <<<"${!accounts[@]}")"
+        for k in $(keys | grep '^general\.imap\.'); do
+            [[ "$k" =~ ^general\.imap\.(.*)$ ]]
+            printf '%s = %s\n' "${BASH_REMATCH[1]}" "${settings[$k]}"
+        done
+        if [[ -z "${settings[general.imap.accounts]+_}" ]]; then
+            # use accounts in any order
+            printf 'accounts = %s\n' "$(tr ' ' ',' <<<"${!accounts[@]}")"
+        fi
         local IFS=$nl
         local Ks=$(keys | grep '^accounts\.[^.]\+\.imap\.')
         for a in "${!accounts[@]}"; do

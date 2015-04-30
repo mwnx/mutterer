@@ -1,21 +1,17 @@
-#!/bin/bash -e
+#!/bin/bash
 
 # --- Mutterer generic common elements ---
 
-set -u
+set -e -u
+
 nl='
 '
 
-DEBUG=${DEBUG-off}
-TOP_PID=$$
+: ${DEBUG=off}
+: ${TOP_PID=$$}
 
-# current section and entry
-section=()
-entry_lhs=
-entry_eq=
-entry_rhs=
-
-declare -A settings=()
+# Common regexes:
+r_word='[a-zA-Z_-][a-zA-Z0-9_-]*'
 
 error()
 {
@@ -24,7 +20,7 @@ error()
     exit 1
 }
 
-debug()
-{
-    if [[ "$DEBUG" == on ]]; then printf '%s\n' "$*"; fi
-}
+# debug()
+# {
+#     if [[ "$DEBUG" == on ]]; then printf '%s\n' "$*"; fi
+# }

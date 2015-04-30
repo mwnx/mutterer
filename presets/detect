@@ -1,0 +1,15 @@
+[accounts gmail]
+imap_host         ?= imap.googlemail.com
+imap_type         ?= Gmail
+imap_filter       ?= "lambda f: f not in '[Gmail]/All Mail'"
+smtp_host         ?= smtp.googlemail.com:465
+smtp.tls          ?= on
+smtp.tls_starttls ?= on
+
+[accounts outlook]
+imap_host         ?= imap-mail.outlook.com:993
+imap_type         ?= IMAP
+imap_ssl          ?= yes
+smtp_host         ?= smtp-mail.outlook.com:587
+smtp.tls          ?= on
+smtp.tls_starttls ?= on

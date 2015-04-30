@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -e -u
+
+# Wrap a generated bash script to fail on any stderr output.
+# Useful combined with 'set -u' to detect the use of unset variables in
+# subexpressions.
+
+{
+    { "$@" 2>&1>&3 | grep '^.\+$'; } &&
+    {
+        echo '=> Error evaluating bash expression.'
+        exit 1
+    }
+} 3>&1 1>&2 || true

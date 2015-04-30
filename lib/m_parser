@@ -1,11 +1,20 @@
-#!/bin/bash -e
+#!/bin/bash
+
+set -e -u
 
 # --- Mutterer parsing ---
 
-linenum=0
+filename=
+linenum=
 
-#regexes:
-r_word='[a-zA-Z_-][a-zA-Z0-9_-]*'
+# current section and entry
+section=()
+entry_lhs=
+entry_eq=
+entry_rhs=
+
+declare -A groups=()
+declare -A accounts=()
 
 # group_accounts groupname; return space-seperated list of accounts
 group_accounts()
@@ -16,12 +25,7 @@ group_accounts()
 # error message
 parse_error()
 {
-    error "line $linenum: $*"
-}
-
-printn()
-{
-    printf '%s\n' "$*"
+    error "$filename:$linenum: $*"
 }
 
 incr_linenum()
@@ -105,11 +109,6 @@ subst()
     local account=$1
     local str=$2
 
-    # # False positives when a variable pattern (${?...) is inside single quotes but... whatever...
-    # # Also, false negatives if someone uses eval to concatenate a '$' and a variable name...
-    # # Not much can be done about that.
-    # [[ ! "$str" =~ (^|[^\\])\$'{'?_ ]] || parse_error "Variables starting with '_' are reserved."
-
     while true; do
         if [[ "$str" =~ ^(.*)%'{'($r_word(\.$r_word)*)(.*)$ ]]; then
             local end_bracket=
@@ -119,54 +118,93 @@ subst()
             break
         fi
         local key=accounts.${account}.${BASH_REMATCH[2]}
-        # [[ -n "${settings[$key]+_}" ]] || parse_error "Element '$key' is undefined."
         str="${BASH_REMATCH[1]}\${settings[$key]$end_bracket${BASH_REMATCH[4]}"
     done
     printf '%s\n' "$str"
-    #TODO: deal with other accessible variables (add __ in front of everything)
 }
 
-# subst_eval account str
-subst_eval()
+# gen_debug key
+gen_debug()
 {
-    local str=$(subst "$@")
-
-    # Can't catch errors raised from subexpressions directly (e.g. echo "$(...)"), hence the hack.
-    {
-        { eval printn "$str" 2>&1>&3 | grep '^.\+$'; } \
-        && parse_error 'Error evaluating bash expression.'
-    } 3>&1 1>&2 || true
+    if [[ "$DEBUG" == on ]]; then
+        printf 'printn "%s = ${settings[%s]}"\n' "$1" "$1"
+    fi
 }
 
 # entry_append key val
-entry_append()
+gen_append()
 {
-    settings[$1]+=$(printf '\n%s' "$2")
-    debug "$1 = ${settings[$1]}"
+    printf 'settings[%s]+=$(echo; printn %s)\n' "$1" "$2"
+    gen_debug "$1"
 }
 
 # entry_assign key val
-entry_assign()
+gen_assign()
 {
-    settings[$1]=$2
-    debug "$1 = ${settings[$1]}"
+    printf 'settings[%s]=$(printn %s)\n' "$1" "$2"
+    gen_debug "$1"
+}
+
+gen_assign_if_not_already_assigned()
+{
+    printf 'if [[ -z "${settings["%s"]-}" ]]; then\n' "$1"
+    gen_assign "$1" "$2"
+    printf 'fi\n'
+}
+
+gen_assign_if_rhs()
+{
+    printf 'if [[ -n "$(printn %s)" ]]; then\n' "$2"
+    gen_assign "$1" "$2"
+    printf 'else\n'
+    printf 'unset settings["%s"]\n' "$1"
+    printf 'fi\n'
+}
+
+gen_assign_if_rhs_and_not_already_assigned()
+{
+    printf 'if [[ -z "${settings["%s"]-}" && -n "$(printn %s)" ]]; then\n' "$1" "$2"
+    gen_assign "$1" "$2"
+    printf 'fi\n'
+}
+
+# process_assign key eq rhs
+process_assign()
+{
+    local key=$1
+    local eq=$2
+    local rhs=$3
+    case "$eq" in
+           =) gen_assign "$key" "$rhs";;
+         \?=) gen_assign_if_not_already_assigned "$key" "$rhs";;
+          ~=) gen_assign_if_rhs "$key" "$rhs";;
+        \?~=) gen_assign_if_rhs_and_not_already_assigned "$key" "$rhs";;
+          +=) gen_append "$key" "$rhs";;
+           *) parse_error "Unknown assignment type: '$eq'.";;
+    esac
+}
+
+parse_general_entry()
+{
+    parse_entry "$1" || return 1
+    
+    process_assign "general.$entry_lhs" "$entry_eq" "$entry_rhs"
+}
+
+parse_general()
+{
+    while read_first_non_empty_line; do
+        parse_general_entry "$REPLY" || { unread_line "$REPLY"; break; }
+    done
 }
 
 # process_entry_with_account account (reads entry_{lhs,eq,rhs})
 process_entry_with_account()
 {
     local account=$1
-    local key=accounts.${account}.$(subst_eval "$account" "$entry_lhs")
-    local rhs=$(subst_eval "$account" "$entry_rhs")
-    case "${entry_eq}" in
-           =) ;;
-         \?=) [[ -z "${settings[$key]-}" ]] || return 0;;
-          ~=) [[ -n "$entry_rhs" ]] || { unset settings[$key]; return 0; };;
-        \?~=) [[ -z "${settings[$key]-}" && -n "$rhs" ]] || return 0;;
-          +=) entry_append "$key" "$rhs"; return 0;;
-           *) parse_error "Unknown assignment type: '${entry_eq}'.";;
-    esac
-    entry_assign "$key" "$rhs"
+    local key=accounts.${account}.$(subst "$account" "$entry_lhs")
+    local rhs=$(subst "$account" "$entry_rhs")
+    process_assign "$key" "$entry_eq" "$rhs"
 }
 
 # init_account account_name
@@ -174,7 +212,8 @@ init_account()
 {
     if [[ -z "${accounts[$1]+_}" ]]; then
         accounts[$1]=
-        settings[accounts.${1}.id]=${1}
+        printf 'accounts[%s]=\n' "$1"
+        printf 'settings[accounts.%s.id]=%s\n' "$1" "$1"
     fi
 }
 
@@ -204,23 +243,62 @@ parse_accounts()
 parse_section()
 {
     read_first_non_empty_line || return 1
-    parse_section_title "$REPLY" || return 1
+    parse_section_title "$REPLY" || { unread_line "$REPLY"; return 1; }
 
     local section_type=${section[0]}
     case "${section[0]}" in
+        general)  parse_general;;
         groups)   parse_groups;;
         account)  [[ "${section[1]}" =~ ^$r_word$ ]] ||
-                  parse_error "Account name must be a simple word; '${section[1]}' invalid."
+                      parse_error "Account name must be a simple word; '${section[1]}' invalid."
                   parse_accounts ${section[1]};;
         accounts) parse_accounts $(group_accounts ${section[1]});;
         *)        parse_error "Invalid section type: '${section[0]}'.";;
     esac
 }
 
-parse_file()
+parse_source()
 {
-    while parse_section; do true; done
-    if read_line; then parse_error "Invalid syntax."; fi
+    read_first_non_empty_line || return 1
+
+    [[ "$REPLY" =~ ^\.[[:space:]]+(.*)$ ]] &&
+    {
+        local f=${BASH_REMATCH[1]}
+        local file=
+        for i in "$MUTTERER_DIR/presets/$f" \
+                 "$MUTTERER_DIR/presets/system/$f" \
+                 "$f"; do
+            if [[ -e "$i" ]]; then file=$i; break; fi
+        done
+        [[ -z "$file" ]] && parse_error "File not found: '$f'."
+
+        local saved_filename=$filename
+        local saved_linenum=$linenum
+        parse_file "$file"
+        filename=$saved_filename
+        linenum=$saved_linenum
+    }
 }
 
+parse_top()
+{
+    parse_section || parse_source
+}
 
+# parse_stdin <(stdin) >(generated bash script)
+parse_stdin()
+{
+    while parse_top; do true; done
+    if read_line; then
+        linenum=$((linenum - 1))
+        parse_error "Invalid syntax."
+    fi
+}
+
+# parse_file filename >(generated bash script)
+parse_file()
+{
+    filename="$1"
+    linenum=0
+    parse_stdin <"$filename"
+}

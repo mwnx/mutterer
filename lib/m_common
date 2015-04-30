@@ -1,17 +1,16 @@
-#!/bin/bash -e
+#!/bin/bash
 
 # --- Mutterer common elements ---
 
+set -e -u
+
 . "$MUTTERER_LIBS/common"
 
-MUTTERERRC=${MUTTERERRC-~/.muttererrc}
-MUTTERER_DIR=${MUTTERER_DIR-~/.mutterer}
+: ${MUTTERERRC=~/.muttererrc}
+: ${MUTTERER_DIR=~/.mutterer}
 
-MUTTRC=${MUTTRC-~/.muttrc}
-MUTTRC2=${MUTTRC2-~/.mutt/muttrc}
-OFFLINEIMAPRC=${OFFLINEIMAPRC-~/.offlineimaprc}
-OFFLINEIMAPLOCK=${OFFLINEIMAPLOCK-~/.offlineimap/lock}
-MSMTPRC=${MSMTPRC-~/.msmtprc}
-
-declare -A groups=()
-declare -A accounts=()
+: ${MUTTRC=~/.muttrc}
+: ${MUTTRC2=~/.mutt/muttrc}
+: ${OFFLINEIMAPRC=~/.offlineimaprc}
+: ${OFFLINEIMAPLOCK=~/.offlineimap/lock}
+: ${MSMTPRC=~/.msmtprc}

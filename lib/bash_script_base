@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -e -u
+
+declare -A settings=()
+declare -A accounts=()
+
+printn()
+{
+    printf '%s\n' "$*"
+}
+

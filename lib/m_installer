@@ -1,6 +1,13 @@
-#!/bin/bash -e
+#!/bin/bash
 
 # --- Mutterer Installing ---
+
+set -e -u
+
+# # Execute this file with the MUTTERER_RUN_SCRIPTS environment set to 'yes'
+# # to run the generated script inside a clean environment.
+# if [[ "${MUTTERER_RUN_SCRIPT-}" == yes ]]; then
+# fi
 
 # _install : CALL WITH OFFLINEIMAP LOCKED
 _install()
@@ -10,12 +17,27 @@ _install()
     cp "$configs_dir"/msmtprc "$MSMTPRC"
 }
 
+_make_script()
+{
+    cat "$MUTTERER_LIBS/bash_script_base" > "$configs_dir/script.bash"
+    parse_file "$MUTTERERRC" >> "$configs_dir/script.bash"
+}
+
+_source_script()
+{
+    # TODO: execute in new environment
+    . "$configs_dir/script.bash"
+        echo "${!settings[@]}"
+}
+
 make()
 {
     {
         flock -n 9 || error "Couldn't capture offlineimap lock. Exiting."
-        parse_file <"$MUTTERERRC"
-        print_settings
+        _make_script
+        export configs_dir
+        "$MUTTERER_LIBS/bash_script_wrapper" \
+            "$MUTTERER_LIBS/m_installer_run_script_and_print"
         _install
     } 9>"$OFFLINEIMAPLOCK"
 }
