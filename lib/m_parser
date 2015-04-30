@@ -82,9 +82,10 @@ parse_group()
 
     [[ "$entry_lhs" =~ ^$r_word$ ]] ||
         parse_error "Expecting simple word as group name."
+    local rhs=$(subst_groups "$entry_rhs")
     case "$entry_eq" in
-         =) printf 'groups[%s]=$(printn %s)\n' "$entry_lhs" "$entry_rhs";;
-        +=) printf 'add_to_group %s "$(printn %s)"\n' "$entry_lhs" "$entry_rhs";;
+         =) printf 'groups[%s]=$(printn %s)\n' "$entry_lhs" "$rhs";;
+        +=) printf 'add_to_group %s "$(printn %s)"\n' "$entry_lhs" "$rhs";;
          *) parse_error "Expecting '=' or '+='.";;
     esac
 }
