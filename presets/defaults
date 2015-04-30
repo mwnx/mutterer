@@ -8,10 +8,10 @@
 #           imap_ssl, imap_filter, smtp.tls_fingerprint,
 
 # The main_account group should only contain one account.
-[accounts main_account]
+[accounts %main_account]
 MUTT.'source ' += ~/.mutterer/configs/_%{id}/muttrc
 
-[accounts defaults]
+[accounts %{defaults:-}]
 goto_account_key  ?= g
 goto_subdir_key   ?= _
 mutt.sendmail     ?= "\"/usr/bin/msmtp -a %{id}\""

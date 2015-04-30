@@ -1,9 +1,21 @@
 #!/bin/bash
 
-set -e -u
+set -e -u -x
+
+if [[ "$DEBUG" == on ]]; then set -x; fi
 
 declare -A settings=()
 declare -A accounts=()
+declare -A group=()
+
+# is_in_group x group
+is_in_group()
+{
+    for i in ${group["$2"]}; do
+        if [[ "$1" == "$i" ]]; then return true; fi
+    done
+    return false
+}
 
 printn()
 {

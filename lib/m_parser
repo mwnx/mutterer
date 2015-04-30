@@ -13,14 +13,6 @@ entry_lhs=
 entry_eq=
 entry_rhs=
 
-declare -A groups=()
-declare -A accounts=()
-
-# group_accounts groupname; return space-seperated list of accounts
-group_accounts()
-{
-    printf '%s\n' "${groups[$1]-}"
-}
 
 # error message
 parse_error()
@@ -68,7 +60,7 @@ read_first_non_empty_line()
 # parse_section_title line
 parse_section_title()
 {
-    [[ "$1" =~ ^\[($r_word)([[:space:]]+(($r_word[[:space:]]*)+))?\]$ ]] &&
+    [[ "$1" =~ ^\[($r_word)([[:space:]]+(.+))?\]$ ]] &&
     section=("${BASH_REMATCH[1]}" "${BASH_REMATCH[3]}")
 }
 
@@ -90,10 +82,9 @@ parse_group()
 
     [[ "$entry_lhs" =~ ^$r_word$ ]] || parse_error "Expecting simple word as group name."
     [[ "$entry_eq" == '=' ]] || parse_error "Expecting '='."
-    [[ "$entry_rhs" =~ ^$r_word(,$r_word)*$ ]] \
-        || parse_error "Expecting comma separated account name list."
+    # TODO: authorise +=
 
-    groups[$entry_lhs]=$(tr ',' ' ' <<< "$entry_rhs")
+    printf 'group[%s]=$(printn %s)\n' "$entry_lhs" "$entry_rhs"
 }
 
 parse_groups()
@@ -103,12 +94,11 @@ parse_groups()
     done
 }
 
-# subst account str : substitute %{...} or %... variables
-subst()
-{
-    local account=$1
+# _subst_ prefix str suffix
+_subst_() {
+    local prefix=$1
     local str=$2
-
+    local suffix=$3
     while true; do
         if [[ "$str" =~ ^(.*)%'{'($r_word(\.$r_word)*)(.*)$ ]]; then
             local end_bracket=
@@ -117,10 +107,25 @@ subst()
         else
             break
         fi
-        local key=accounts.${account}.${BASH_REMATCH[2]}
-        str="${BASH_REMATCH[1]}\${settings[$key]$end_bracket${BASH_REMATCH[4]}"
+        local repl=$prefix${BASH_REMATCH[2]}$suffix
+        str="${BASH_REMATCH[1]}\${$repl$end_bracket${BASH_REMATCH[4]}"
     done
     printf '%s\n' "$str"
+}
+
+# subst_groups group_str
+subst_groups()
+{
+    _subst_ 'group[' "$1" ']'
+}
+
+# subst account str : substitute %{...} or %... variables
+subst()
+{
+    local account=$1
+    local str=$2
+
+    _subst_ "settings[accounts.${account}." "$str" ']'
 }
 
 # gen_debug key
@@ -210,33 +215,36 @@ process_entry_with_account()
 # init_account account_name
 init_account()
 {
-    if [[ -z "${accounts[$1]+_}" ]]; then
-        accounts[$1]=
-        printf 'accounts[%s]=\n' "$1"
-        printf 'settings[accounts.%s.id]=%s\n' "$1" "$1"
-    fi
+    printf 'if [[ -z "${accounts[%s]+_}" ]]; then\n' "$1"
+    printf 'accounts[%s]=\n' "$1"
+    printf 'settings[accounts.%s.id]=%s\n' "$1" "$1"
+    printf 'fi\n'
 }
 
-# init_accounts account_names...
-init_accounts() 
+# parse_account account
+parse_account()
 {
-    for i in "$@"; do init_account "$i"; done
-}
-
-# parse_accounts account_names...
-parse_accounts()
-{
-    init_accounts "$@"
+    init_account "$1"
     while read_first_non_empty_line; do
         if parse_entry "$REPLY"; then
-            for a in "$@"; do
-                process_entry_with_account "$a"
-            done
+            process_entry_with_account "$1"
         else
             unread_line "$REPLY"
             break
         fi
     done
+}
+
+# parse_accounts account_names
+parse_accounts()
+{
+    printf 'for __a in %s; do\n' "$(subst_groups "$1")"
+    # printf 'if [[ -z "${accounts[$__a]+_}" ]]; then\n'
+    # printf 'printf "Error: undeclared account: %%s\\n" "$__a"\n'
+    # printf 'exit 1\n'
+    # printf 'fi\n'
+    parse_account '$__a'
+    printf 'done\n'
 }
 
 # parse_section (read from stdin)
@@ -251,8 +259,8 @@ parse_section()
         groups)   parse_groups;;
         account)  [[ "${section[1]}" =~ ^$r_word$ ]] ||
                       parse_error "Account name must be a simple word; '${section[1]}' invalid."
-                  parse_accounts ${section[1]};;
-        accounts) parse_accounts $(group_accounts ${section[1]});;
+                  parse_account "${section[1]}";;
+        accounts) parse_accounts "${section[1]}";;
         *)        parse_error "Invalid section type: '${section[0]}'.";;
     esac
 }
