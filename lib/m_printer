@@ -6,6 +6,7 @@ configs_dir=$MUTTERER_DIR/configs
 
 keys()
 {
+    local k
     for k in "${!settings[@]}"; do printf '%s\n' "$k"; done
 }
 
@@ -13,6 +14,7 @@ keys()
 print_multi_field()
 {
     local IFS=$nl
+    local i
     for i in $2; do printf '%s\n' "$1 $i"; done
 }
 
@@ -29,6 +31,7 @@ print_mutt_field()
 print_MUTT()
 {
     {
+        local k
         for k in "${!settings[@]}"; do
             if [[ "$k" =~ ^accounts\.[^.]+\.MUTT\.(.*)$ ]]; then
                 print_mutt_field "${BASH_REMATCH[1]}" "${settings[$k]}"
@@ -40,10 +43,12 @@ print_MUTT()
 
 print_mutt()
 {
+    local a
     for a in "${!accounts[@]}"; do
         mkdir -p "$configs_dir/_$a"
         local dir=.mutterer/configs/_$a
         mkdir -p "$dir"
+        local k
         for k in "${!settings[@]}"; do
             if [[ "$k" =~ ^accounts\.${a}\.mutt\.(.*)$ ]]; then
                 print_mutt_field "${BASH_REMATCH[1]}" "${settings[$k]}"
@@ -54,8 +59,10 @@ print_mutt()
 
 print_smtp()
 {
+    local a
     for a in "${!accounts[@]}"; do
             printf 'account %s\n' "$a"
+            local k
             for k in "${!settings[@]}"; do
                 if [[ "$k" =~ ^accounts\.${a}\.smtp\.(.*)$ ]]; then
                     printf '%s %s\n' "${BASH_REMATCH[1]}" "${settings[$k]}"
@@ -81,20 +88,12 @@ print_imap_field()
     printf '%s = %s\n' "${BASH_REMATCH[3]}" "$rhs"
 }
 
-# print_IMAP()
-# {
-#     local IFS=$nl
-#     local ks=$(keys | grep '^accounts\.[^.]\+\.IMAP\.')
-#     for k in $ks; do
-#         print_imap_field 'accounts\.[^.]+\.IMAP\.' "$k" "${settings[$k]}"
-#     done
-# }
-
 print_imap()
 {
     {
         local imap_order=${settings[general.imap_order]-${!accounts[@]}}
         printf '[general]\n'
+        local k
         for k in $(keys | grep '^general\.imap\.'); do
             [[ "$k" =~ ^general\.imap\.(.*)$ ]]
             printf '%s = %s\n' "${BASH_REMATCH[1]}" "${settings[$k]}"
@@ -105,8 +104,10 @@ print_imap()
         fi
         local IFS=$nl
         local Ks=$(keys | grep '^accounts\.[^.]\+\.imap\.')
+        local a
         for a in "${!accounts[@]}"; do
             local ks=$(grep "^accounts\.${a}\." <<<"$Ks" | sort)
+            local k
             for k in $ks; do
                 print_imap_field "accounts\.${a}\.imap\." "$k" "${settings[$k]}"
             done

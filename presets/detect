@@ -1,4 +1,26 @@
-[accounts gmail]
+# Account autoconfiguration based on the host part of the 'address' field.
+# Autoconfiguration can be deactivated for a specific account by adding it
+# to the nodetect group.
+# Remember that you can also manually add an account to an auto group if you
+# want.
+
+# regex_addresses regex
+:regex_addresses()
+:{
+:    local i
+:    for i in ${!accounts[@]}; do
+:        if is_in_group "$i" nodetect; then continue; fi
+:        if [[ "${settings[accounts.${i}.address]}" =~ $1 ]]; then
+:            printf '%s\n' "$i"
+:        fi
+:    done
+:}
+
+[groups]
+auto_gmail   += $(regex_addresses '@gmail\.com$')
+auto_outlook += $(regex_addresses '@(hotmail\..*|live\.com|outlook\.com)$')
+
+[accounts %{auto_gmail:-}]
 imap_host         ?= imap.googlemail.com
 imap_type         ?= Gmail
 imap_filter       ?= "lambda f: f not in '[Gmail]/All Mail'"
@@ -6,7 +28,7 @@ smtp_host         ?= smtp.googlemail.com:465
 smtp.tls          ?= on
 smtp.tls_starttls ?= on
 
-[accounts outlook]
+[accounts %{auto_outlook:-}]
 imap_host         ?= imap-mail.outlook.com:993
 imap_type         ?= IMAP
 imap_ssl          ?= yes

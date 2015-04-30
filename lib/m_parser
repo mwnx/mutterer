@@ -80,11 +80,13 @@ parse_group()
 {
     parse_entry "$1" || return 1
 
-    [[ "$entry_lhs" =~ ^$r_word$ ]] || parse_error "Expecting simple word as group name."
-    [[ "$entry_eq" == '=' ]] || parse_error "Expecting '='."
-    # TODO: authorise +=
-
-    printf 'group[%s]=$(printn %s)\n' "$entry_lhs" "$entry_rhs"
+    [[ "$entry_lhs" =~ ^$r_word$ ]] ||
+        parse_error "Expecting simple word as group name."
+    case "$entry_eq" in
+         =) printf 'groups[%s]=$(printn %s)\n' "$entry_lhs" "$entry_rhs";;
+        +=) printf 'add_to_group %s "$(printn %s)"\n' "$entry_lhs" "$entry_rhs";;
+         *) parse_error "Expecting '=' or '+='.";;
+    esac
 }
 
 parse_groups()
@@ -116,7 +118,7 @@ _subst_() {
 # subst_groups group_str
 subst_groups()
 {
-    _subst_ 'group[' "$1" ']'
+    _subst_ 'groups[' "$1" ']'
 }
 
 # subst account str : substitute %{...} or %... variables
@@ -131,7 +133,7 @@ subst()
 # gen_debug key
 gen_debug()
 {
-    if [[ "$DEBUG" == on ]]; then
+    if [[ "${DEBUG-}" == on ]]; then
         printf 'printn "%s = ${settings[%s]}"\n' "$1" "$1"
     fi
 }
@@ -239,10 +241,6 @@ parse_account()
 parse_accounts()
 {
     printf 'for __a in %s; do\n' "$(subst_groups "$1")"
-    # printf 'if [[ -z "${accounts[$__a]+_}" ]]; then\n'
-    # printf 'printf "Error: undeclared account: %%s\\n" "$__a"\n'
-    # printf 'exit 1\n'
-    # printf 'fi\n'
     parse_account '$__a'
     printf 'done\n'
 }
@@ -269,10 +267,10 @@ parse_source()
 {
     read_first_non_empty_line || return 1
 
-    [[ "$REPLY" =~ ^\.[[:space:]]+(.*)$ ]] &&
-    {
+    if [[ "$REPLY" =~ ^\.[[:space:]]+(.*)$ ]]; then
         local f=${BASH_REMATCH[1]}
         local file=
+        local i
         for i in "$MUTTERER_DIR/presets/$f" \
                  "$MUTTERER_DIR/presets/system/$f" \
                  "$f"; do
@@ -282,15 +280,36 @@ parse_source()
 
         local saved_filename=$filename
         local saved_linenum=$linenum
+        if [[ "${DEBUG-}" == on ]]; then
+            printf "printn \".: Entering '%s'.\\\n\"\n" "$file"
+        fi
         parse_file "$file"
+        if [[ "${DEBUG-}" == on ]]; then
+            printf "printn \".: Leaving '%s'.\\\n\"\n" "$file"
+        fi
         filename=$saved_filename
         linenum=$saved_linenum
-    }
+    else
+        unread_line "$REPLY"
+        return 1
+    fi
+}
+
+parse_bash()
+{
+    read_first_non_empty_line || return 1
+
+    if [[ "$REPLY" =~ ^:(.*)$ ]]; then
+        printf '%s\n' "${BASH_REMATCH[1]}"
+    else
+        unread_line "$REPLY"
+        return 1
+    fi
 }
 
 parse_top()
 {
-    parse_section || parse_source
+    parse_section || parse_bash || parse_source
 }
 
 # parse_stdin <(stdin) >(generated bash script)

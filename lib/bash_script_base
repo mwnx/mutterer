@@ -1,20 +1,30 @@
 #!/bin/bash
 
-set -e -u -x
-
-if [[ "$DEBUG" == on ]]; then set -x; fi
+set -e -u
 
 declare -A settings=()
 declare -A accounts=()
-declare -A group=()
+declare -A groups=()
 
 # is_in_group x group
 is_in_group()
 {
-    for i in ${group["$2"]}; do
-        if [[ "$1" == "$i" ]]; then return true; fi
+    local i
+    for i in ${groups[$2]-}; do
+        if [[ "$1" == "$i" ]]; then return 0; fi
     done
-    return false
+    return 1
+}
+
+# add_to_group group xs
+add_to_group()
+{
+    local i
+    for i in $2; do
+        if ! is_in_group "$i" "$1"; then
+            groups[$1]+=" $i"
+        fi
+    done
 }
 
 printn()
