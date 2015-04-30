@@ -1,5 +1,16 @@
 # General account configuration.
 #
+# Provides the following groups:
+# - imap_defaults: offlineimap related defaults
+# - smtp_defaults: msmtp related defaults
+# - mutt_defaults: mutt related defaults
+# - defaults: all of the above
+# - mutt_defaults_extra: mutt defaults with some perhaps less common stuff
+# - defaults_extra: all of the above
+#
+# You'll probably want to simply add your accounts to 'defaults' of
+# 'defaults_extra' depending on your preference.
+#
 # Depends on: name, address, password, smtp_host, imap_host;
 # smtp_host and imap_host are in the format: host(:port)?
 # e.g. mail.example.com or mail.example.com:999
@@ -11,29 +22,39 @@
 [accounts %main_account]
 MUTT.'source ' += ~/.mutterer/configs/_%{id}/muttrc
 
-[accounts %{defaults:-}]
-goto_account_key  ?= g
-goto_subdir_key   ?= _
-mutt.sendmail     ?= "\"/usr/bin/msmtp -a %{id}\""
-mutt.signature    ?= "~/.mutterer/%{id}.sig"
-mutt.realname     ?= %{name}
-mutt.my_hdr Name: ?= %{name}
-mutt.from         ?= %{address}
-mutt.mbox_type    ?= Maildir
-box               ?= %MDIR/%{id}
-mutt.spoolfile    ?= %box/[Ii][Nn][Bb][Oo][Xx]
-mutt.record       ?= %box/[Ss][Ee][Nn][Tt]
-mutt.postponed    ?= %box/[Dd][Rr][Aa][Ff][Tt][Ss]
-mutt.trash        ?= %box/[Tt][Rr][Aa][Ss][Hh]
-junk              ?= %box/$(ls "%box" | grep -i '^\(spam\|junk\)$' | head -n1)
+[groups]
+defaults            += %{defaults_extra:-}
+mutt_defaults_extra += %{defaults_extra:-}
+mutt_defaults       += %{defaults:-} %{mutt_defaults_extra:-}
+imap_defaults       += %{defaults:-}
+smtp_defaults       += %{defaults:-}
+
+[accounts %{mutt_defaults:-}]
+mutt.realname                  ?= %{name}
+mutt.my_hdr Name:              ?= %{name}
+mutt.from                      ?= %{address}
+mutt.sendmail                  ?= "\"/usr/bin/msmtp -a %{id}\""
+mutt.signature                 ?= "~/.mutterer/%{id}.sig"
+box                            ?= %MDIR/%{id}
+mutt.spoolfile                 ?= %box/[Ii][Nn][Bb][Oo][Xx]
+mutt.record                    ?= %box/[Ss][Ee][Nn][Tt]
+mutt.postponed                 ?= %box/[Dd][Rr][Aa][Ff][Tt][Ss]
+mutt.trash                     ?= %box/[Tt][Rr][Aa][Ss][Hh]
+mutt.mbox_type                 ?= Maildir
+goto_account_key               ?= g
+MUTT.macro index,pager         += %{goto_account_key}%{account_key} "\"<change-folder>%{mutt.spoolfile}\n\""
+MUTT.folder-hook \"%{box}\"/\*  = source ~/.mutterer/configs/_%{id}/muttrc
+
+[accounts %{mutt_defaults_extra:-}]
+goto_subdir_key        ?= _
+junk                   ?= %box/$(ls "%box" | grep -i '^\(spam\|junk\)$' | head -n1)
 mutt.macro index,pager += %{goto_subdir_key}i "\"<change-folder>%{mutt.spoolfile}\n\""
 mutt.macro index,pager += %{goto_subdir_key}s "\"<change-folder>%{mutt.record}\n\""
 mutt.macro index,pager += %{goto_subdir_key}d "\"<change-folder>%{mutt.postponed}\n\""
 mutt.macro index,pager += %{goto_subdir_key}t "\"<change-folder>%{mutt.trash}\n\""
 mutt.macro index,pager += %{goto_subdir_key}j "\"<change-folder>%{junk}\n\""
-MUTT.macro index            = %{goto_account_key}%{account_key} "\"<change-folder>%{mutt.spoolfile}\n\""
-MUTT.folder-hook \"%{box}\"/\* = source ~/.mutterer/configs/_%{id}/muttrc
 
+[accounts %{imap_defaults:-}]
 imap.Account %{id}.localrepository       ?= local_%{id}
 imap.Account %{id}.remoterepository      ?= remote_%{id}
 imap.Repository local_%{id}.type         ?= Maildir
@@ -45,9 +66,10 @@ imap.Repository remote_%{id}.remotehost  ?= %{imap_host%:*}
 imap.Repository remote_%{id}.remoteport ?~= $([[ ! "%{imap_host}" =~ : ]] || echo "%{imap_host#*:}")
 imap.Repository remote_%{id}.ssl        ?~= %{imap_ssl:-}
 imap.Repository remote_%{id}.remotepass  ?= %{password}
-## imap.Repository.remote_${id}.sslcacertfile = ...
 imap.Repository remote_%{id}.folderfilter ?~= %{imap_filter:-}
+# imap.Repository.remote_${id}.sslcacertfile = ...
 
+[accounts %{smtp_defaults:-}]
 smtp.user             ?= %{address}
 smtp.from             ?= %{address}
 smtp.host             ?= %{smtp_host%:*}

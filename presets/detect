@@ -1,4 +1,5 @@
 # Account autoconfiguration based on the host part of the 'address' field.
+#
 # Autoconfiguration can be deactivated for a specific account by adding it
 # to the nodetect group.
 # Remember that you can also manually add an account to an auto group if you
@@ -19,6 +20,7 @@
 [groups]
 auto_gmail   += $(regex_addresses '@gmail\.com$')
 auto_outlook += $(regex_addresses '@(hotmail\..*|live\.com|outlook\.com)$')
+auto_gmx     += $(regex_addresses '@gmx\.(com|us)$')
 
 [accounts %{auto_gmail:-}]
 imap_host         ?= imap.googlemail.com
@@ -35,3 +37,10 @@ imap_ssl          ?= yes
 smtp_host         ?= smtp-mail.outlook.com:587
 smtp.tls          ?= on
 smtp.tls_starttls ?= on
+
+[accounts %{auto_gmx:-}]
+imap_host         ?= imap.gmx.com
+imap_type         ?= IMAP
+smtp_host         ?= mail.gmx.com:465
+smtp.tls          ?= on
+smtp.tls_starttls ?= off
