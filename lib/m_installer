@@ -4,6 +4,8 @@
 
 set -e -u
 
+. "$MUTTERER_LIBS/m_parser"
+
 # # Execute this file with the MUTTERER_RUN_SCRIPTS environment set to 'yes'
 # # to run the generated script inside a clean environment.
 # if [[ "${MUTTERER_RUN_SCRIPT-}" == yes ]]; then
@@ -25,12 +27,11 @@ _make_script()
 
 _source_script()
 {
-    # TODO: execute in new environment
     . "$configs_dir/script.bash"
         echo "${!settings[@]}"
 }
 
-make()
+make_config()
 {
     {
         flock -n 9 || error "Couldn't capture offlineimap lock. Exiting."
@@ -49,10 +50,10 @@ updated()
     [[ "$MUTTERERRC" -nt "$MSMTPRC" ]]
 }
 
-make_if_updated()
+make_config_if_updated()
 {
     if updated; then
         echo 'Mutterer: updating config...' 1>&2
-        make
+        make_config
     fi
 }

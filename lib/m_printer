@@ -2,8 +2,6 @@
 
 # --- Mutterer Printing (reads 'settings' and 'accounts' arrays) ---
 
-configs_dir=$MUTTERER_DIR/configs
-
 keys()
 {
     local k

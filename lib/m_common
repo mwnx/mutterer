@@ -8,6 +8,7 @@ set -e -u
 
 : ${MUTTERERRC=~/.muttererrc}
 : ${MUTTERER_DIR=~/.mutterer}
+configs_dir=$MUTTERER_DIR/configs
 
 : ${MUTTRC=~/.muttrc}
 : ${MUTTRC2=~/.mutt/muttrc}

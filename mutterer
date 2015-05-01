@@ -6,14 +6,12 @@ set -e -u
 export MUTTERER_LIBS="${MUTTERER_LIBS-$(dirname "$0")/lib}"
 
 . "$MUTTERER_LIBS/m_common"
-. "$MUTTERER_LIBS/m_parser"
-. "$MUTTERER_LIBS/m_printer"
 . "$MUTTERER_LIBS/m_installer"
 
 case "${1-}" in
-    install) make;;
-    mutt)    shift; make_if_updated; mutt "$@";;
-    imap)    shift; make_if_updated; offlineimap "$@";;
-    smtp)    shift; make_if_updated; msmtp "$@";;
-    *)       make_if_updated; mutt "$@";;
+    install) make_config;;
+    mutt)    shift; make_config_if_updated; mutt "$@";;
+    imap)    shift; make_config_if_updated; offlineimap "$@";;
+    smtp)    shift; make_config_if_updated; msmtp "$@";;
+    *)       make_config_if_updated; mutt "$@";;
 esac
