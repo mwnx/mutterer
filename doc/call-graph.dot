@@ -1,0 +1,37 @@
+digraph G {
+	rankdir=LR
+	ratio=0.2
+	//nodesep=1
+	edge [fontsize=12]
+	node [shape=box]
+	//ranksep="0.01"
+	//minlen=0
+	mutterer -> m_common [label="source",style=dashed]
+	m_common -> common [label="source",style=dashed,weight=0.01]
+	common -> "script.bash" [style=invis]
+	mutterer -> m_installer [label="source &&\ncall make_config"]
+	m_installer -> m_parser [label="source &&\ncall parse_file"]
+	m_parser -> "script.bash" [label=generate]
+	m_parser -> bash_script_wrapper [style=invis]
+	settings [label="settings[],\naccounts[]",shape=octagon]
+	"script.bash" -> settings [label=compute]
+	"script.bash" -> m_printer [style=invis]
+	m_installer -> bash_script_wrapper [label=exec]
+	bash_script_wrapper [label="bash_\nscript_\nwrapper"]
+	m_installer_run_script_and_print [label="m_installer_\nrun_script_\nand_print"]
+	bash_script_wrapper -> m_installer_run_script_and_print [label=exec]
+	m_installer_run_script_and_print -> "script.bash" [label="source"]
+	m_installer_run_script_and_print -> m_printer [label="source && call print_settings"]
+	m_installer_run_script_and_print -> m_common [label="source",style=dashed]
+	configs [label="$configs_dir/\n{muttrc,\n_*/muttrc,\nofflineimaprc,\nmsmtprc}",shape=Msquare]
+	settings -> configs [style=invis]
+	m_printer -> settings [label=read]
+	m_printer -> configs [label=generate]
+	dotfiles [label="~/.{muttrc,\nofflineimaprc,\nmsmtprc}",shape=Msquare]
+	m_installer -> dotfiles [label="cp $configs_dir/{muttrc,offlineimap,msmtprc}"]
+	{rank=same; dotfiles; LOWEST}
+
+	//dummy:
+	LOWEST [shape=none, width=0, height=0, label=""];
+	configs -> LOWEST [style=invis]
+}
