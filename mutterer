@@ -4,6 +4,7 @@
 set -e -u
 
 export MUTTERER_LIBS="${MUTTERER_LIBS-$(dirname "$0")/lib}"
+export MUTTERER_SYSTEM_PRESETS="${MUTTERER_SYSTEM_PRESETS-$(dirname "$0")/presets}"
 
 . "$MUTTERER_LIBS/m_common"
 . "$MUTTERER_LIBS/m_installer"

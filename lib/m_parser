@@ -273,7 +273,7 @@ parse_source()
         local file=
         local i
         for i in "$MUTTERER_DIR/presets/$f" \
-                 "$MUTTERER_DIR/presets/system/$f" \
+                 "$MUTTERER_SYSTEM_PRESETS/$f" \
                  "$f"; do
             if [[ -e "$i" ]]; then file=$i; break; fi
         done
