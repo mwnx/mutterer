@@ -11,12 +11,19 @@
 # You'll probably want to simply add your accounts to 'defaults' of
 # 'defaults_extra' depending on your preference.
 #
-# Depends on: name, address, password, smtp_host, imap_host;
+# Depends on:
+# - folder: shortcut for mutt.folder
+# - name: shortcut for mutt.realname
+# - address: shortcut for mutt.from
+# - password: shortcut for smtp.password and imap.password
+# - smtp_host: Either smtp.host or smpt.host:smtp.port
+#              e.g. example.com or example.com:666
+# - imap_host: Same as smtp_host but for imap
 # smtp_host and imap_host are in the format: host(:port)?
 # e.g. mail.example.com or mail.example.com:999
 #
-# Optional: goto_account_key, goto_subdir_key, MDIR, box, imap_type,
-#           imap_ssl, imap_filter, smtp.tls_fingerprint,
+# Optional: goto_account_key, goto_subdir_key, box, imap_type, imap_ssl,
+#           imap_filter, smtp.tls_fingerprint,
 
 # The main_account group should only contain one account.
 [accounts %main_account]
@@ -35,7 +42,8 @@ mutt.my_hdr Name:              ?= %{name}
 mutt.from                      ?= %{address}
 mutt.sendmail                  ?= "\"/usr/bin/msmtp -a %{id}\""
 mutt.signature                 ?= "~/.mutterer/%{id}.sig"
-box                            ?= %MDIR/%{id}
+mutt.folder                    ?= %folder/
+box                            ?= %folder/%id
 mutt.spoolfile                 ?= %box/[Ii][Nn][Bb][Oo][Xx]
 mutt.record                    ?= %box/[Ss][Ee][Nn][Tt]
 mutt.postponed                 ?= %box/[Dd][Rr][Aa][Ff][Tt][Ss]

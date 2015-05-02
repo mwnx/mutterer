@@ -1,0 +1,31 @@
+[general]
+imap.accounts = john,JMan
+
+[groups]
+defaults       = john JMan
+defaults_extra = %defaults
+main_account   = john
+
+[accounts %defaults]
+folder=${MDIR:-~/.mail/}
+
+[account john]
+name                  = \"John Doe\"
+address               = johndoe@mycompany.example.com
+password              = mypassword
+imap_host             = imap.mycompany.example.com
+smtp_host             = smtp.mycompany.example.com:465
+smtp.tls              = on
+smtp.tls_starttls     = on
+account_key           = j
+mutt.color status     = black white
+
+[account JMan]
+name                  = JMan
+address               = jman93874915699913@gmail.com
+password              = mypassword
+account_key           = J
+mutt.color status     = black magenta
+# The gmail preset will detect good defaults for imap and smtp here
+
+. all
