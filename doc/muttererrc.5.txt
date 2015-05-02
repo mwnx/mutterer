@@ -1,0 +1,207 @@
+muttererrc(5)
+=============
+
+NAME
+----
+muttererrc - Configuration for the Mutterer config file generator
+
+DESCRIPTION
+-----------
+A Mutterer configuration file consists of sections, inline bash scripts, and
+source (a.k.a. import) statements referencing parts of the script stored in
+another file. The config file is read sequentially and each part is applied
+as an instruction, therefore you should be careful of the order of
+instructions.
+
+Sections
+~~~~~~~~
+Sections may appear anywhere in the file and may even appear several times
+in different places. They start with a header of the form
++[section_type arguments...]+.
+There are four types of sections:
+
+* [general] defines general options
+* [groups] defines groups of accounts
+* [account 'name'] defines an account and its options
+* [accounts 'accounts...'] defines options for several accounts at once;
+  these accounts must have already been declared with +[account]+ sections.
+
++[general]+
+~~~~~~~~~~~
+Define options in the global namespace.
+Supported options:
+
+- "*imap*.'option'": Forward 'option' to offlineimaprc's +[General]+ section.
+  E.g. +imap.accounts = john, JMan+
+
++[groups]+
+~~~~~~~~~~
+Define groups. Each line is of the form
+"'group' = 'expr'" or "'group' += 'expr'".
+Where 'group' is a simple word ([a-Z][a-Z0-9_]) and expr is a *special bash
+expression*. Here, a *%-variable* will be expanded to the list of accounts
+in the group represented by said %-variable.
+
+For example, if the group 'defaults' has been defined as "defaults = john
+oliver bob", the command "myGroups = %defaults alice" will expand to
+"myGroups = john oliver bob alice".
+
+Using *+=* instead of *=* appends new new names to the group. If a name in
+the right hand side already exists in the group it is not added a second
+time.
+
++[account] and [accounts]+
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Define options for accounts.
+
+* [account] takes only one account as argument, and serves as a declaration
+  of the account. It sets the '%id' (settings[accounts.'account_name'.id])
+  setting for the account to said argument, so that it may be used later for
+  automatic configuration.
+* [accounts] takes a (possibly empty) list of accounts as argument. The
+  contents of the account section is applied in turn to each argument.
+
+Statements in these sections are of one of these forms:
+
+[verse]
+    'lhs'   = 'rhs'
+    'lhs'  ?= 'rhs'
+    'lhs'  \~= 'rhs'
+    'lhs' ?~= 'rhs'
+    'lhs'  += 'rhs'
+
+where 'lhs' is a per-account setting ([a-Z][a-Z0-9_ ]*\.([a-Z][a-Z0-9_ ]*)*)
+and 'rhs' is a *special bash expression*.
+
+In both the left hand side and the right hand side, *%-variables* are
+expanded to the settings specific to the current account.
+
+The behaviour of these assignment like operations depend on the assignment
+operator as follows:
+
+- = : Assign the value of 'rhs' to 'lhs'
+- ?= : If 'lhs' is unset assign the value of 'rhs' to 'lhs'
+- ~= : If 'rhs' is non-empty assign the value of 'rhs' to 'lhs'
+- ?~= : If 'lhs' is unset *and* 'rhs' is non-empty assign the value of
+  'rhs' to 'lhs'
+- += : Assign the value of "'$lhs'#\n#'rhs'" to 'lhs' where '$lhs' is the
+  current value of the 'lhs' setting (or the empty string if it is unset)
+  and '\n' is a newline character.
+
+Mutterer has built-in support for certain setting prefixes. Setting keys not
+conforming to these prefixes will be ignored during the printing of the
+various configuration files, but are still useful as variables.
+Supported per-account configuration prefixes are:
+
+- mutt.'option' : Add 'option' to the account's mutt configuration file.
+- MUTT.'option' : Add 'option' to the mutt's main configuration file which
+  is loaded by mutt on startup.
+- imap.'option' : Add 'option' to offlineimap's configuration for the
+  current user.
+- smtp.'option' : Add 'option' to msmtp's configuration for the current
+  user.
+
+Special bash expressions
+~~~~~~~~~~~~~~~~~~~~~~~~
+A special bash expression is an expression that will be evaluated by bash,
+as opposed to used verbatim. Before it is evaluated by bash, sequences
+similar to bash variable references, but starting by *%* instead of *$*,
+will be expanded. We will call these sequences %-variables. These variables
+can take the form "%'var_name'" or "%{'setting_name'...}".
+In the first case, 'var_name' is a simple word ([a-Z][a-Z0-9_]), and in the
+second case, 'setting_name' can be a setting sub-key of the form
+"part1.part2.'...'". The '...' part of "%{'setting_name'...}" will be left
+as-is in the resulting bash expression which will have the form
+"${'setting_variable'...}". "%'var_name'" is equivalent to "%{'var_name'}".
+
+The way %-variables are expanded depends on the context. See each section's
+documentation for specifics.
+
+*Note 1*: The generated bash script is run with bash's '-u' option so using
+an unset variable will generate an error, and the process will be aborted.
+If you want to interpret an unset variable as an empty string use
+"${my_var:-}" or "%{my_var:-}" instead of "$my_var" or "%my_var"
+respectively.
+
+*Note 2*: Bash expressions are interpreted as if passed to the 'echo'
+command unquoted (except we use an internal function called 'printn' instead
+to avoid bad behaviour in cases where the input starts with '-n' or '-e').
+So for instance, the following line:
+
+    mutt.signature = "$SIG_DIR/%{id}.sig"
+
+will be translated to:
+
+[verse]
+    settings['[...]'.mutt.signature]=$(printn "%SIG_DIR/'[...]'.sig")
+
+in the generated bash script. This will result in the following line in your
+muttrc:
+
+    signature = /home/john/my signature directory/JMan.sig
+
+If you want to have quotes in the generated config file, you have to escape
+them like so:
+
+    mutt.signature = \"$SIG_DIR/%{id}.sig\"
+
+Inline bash scripting
+~~~~~~~~~~~~~~~~~~~~~
+Lines starting with a colon (*:*) will be inserted as-is in the generated
+bash script (except without the *:*).
+See 'presets/detect' for an example.
+
+Variables you might want to use in scripting:
+
+[verse]
+    ${!accounts[@]}                 # accounts declared as of yet
+    ${!groups[@]}                   # groups declared as of yet
+    ${!groups['k']}                   # accounts in group 'k'
+    ${!settings[@]}                 # setting keys
+    ${settings['k']}                  # setting value
+    ${settings[accounts.'%id'.'k']}     # per-account setting
+
+Source statements
+~~~~~~~~~~~~~~~~~
+Source (or import) statements are of the form ". 'path'".
+This will cause the first existing file among the following to be parsed as
+if it were pasted at that point in the file:
+
+- "$MUTTERER_DIR/presets/'path'"
+- "$MUTTERER_SYSTEM_PRESETS/'path'"
+- 'path' (absolute path or path relative to the current directory)
+
+It is an error if none of these files exist.
+
+System presets
+~~~~~~~~~~~~~~
+Mutterer is distributed with the following system presets:
+
+- defaults: presets you'll need for your Mutterer config to actually do
+  anything useful.
+- detect: presets for detecting proper imap and smtp settings based on
+  accounts' email addresses.
+- all: sources all of the above
+
+See these files themselves for their documentation.
+
+I suggest you add the following line *at the end of* your 'muttererrc', at
+least to start:
+
+[verse]
+    #.# all
+
+and read the comments in 'presets/defaults'.
+
+EXAMPLES
+--------
+See the 'muttererrc.example' file in the documentation folder to get
+started.
+
+SEE ALSO
+--------
+mutterer(1), mutt(1), muttrc(5), offlineimap(1), msmtp(1)
+
+AUTHOR
+------
+mwnx <mwnx@gmx.com>

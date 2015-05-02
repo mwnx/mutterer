@@ -1,0 +1,93 @@
+mutterer(1)
+===========
+
+NAME
+----
+mutterer - A config file generator for mutt, offlineimap and msmtp
+
+SYNOPSIS
+--------
+[verse]
+*mutterer* [install|mutt|imap|smtp] [args...]
+
+DESCRIPTION
+-----------
+Mutterer's purpose is to centralise the configuration for a whole email
+client suite and to automate some repetitive parts of configuration.
+It achieves this by generating the configuration for all the components of
+client side email ('.muttrc', '.offlineimaprc', '.msmtprc') from a single
+configuration file ('.muttererrc') and allowing the use of bash scripting
+inside the centralised configuration file.
+
+With the 'install' argument, *mutterer* will simply generate the config
+files from the 'muttererrc'. Otherwise it will check if the 'muttererrc' has
+been updated and regenerate the configs if needed.
+No argument or 'mutt' launches *mutt*, 'imap' launches *offlineimap*, and
+'smtp' launches *msmtp*. Any extra arguments are forwarded over.
+
+OPTIONS
+-------
+Right now, Mutterer doesn't really have much by way of options. See
+ENVIRONMENT for configuring various paths.
+
+ENVIRONMENT
+-----------
+*MUTTERERRC*::
+	Path to the central Mutterer config file.
+	(default: '~/.muttererrc')
+
+*MUTTERER_DIR*::
+	Per user mutterer directory (contains generated configuration, and
+	user presets)
+	(default: '~/.mutterer/)
+
+*MUTTRC*::
+	Path to the muttrc that will be generated.
+	(default: '~/.muttrc')
+
+*MUTTRC2*::
+	Path to the manually written part of the muttrc, which will be
+	sourced inside the generated $MUTTRC.
+	(default '~/.mutt/muttrc')
+
+*OFFLINEIMAPRC*::
+	Path to the offlineimaprc that will be generated.
+	(default: '~/.offlineimaprc')
+
+*OFFLINEIMAPLOCK*::
+	Path to offlineimap's lock file (to prevent mutterer and offlineimap
+	from running concurrently).
+	(default: '~/.offlineimap/lock')
+
+*MSMTPRC*::
+	Path to msmtprc that will be generated.
+	(default: '~/.msmtprc')
+
+*DEBUG*::
+	If set to 'on', activates debug output.
+
+*MUTTERER_LIBS*::
+	Path to the directory containing Mutterer's sub-scripts.
+
+*MUTTERER_SYSTEM_PRESETS*::
+	Path to the directory containing the system's preset files.
+
+FILES
+-----
+'$MUTTERER_DIR/presets'::
+	Generic configuration components that can be included from the
+	user's main config file.
+
+'$MUTTERER_DIR/configs'::
+	Generated files.
+
+'$MUTTERER_DIR/configs/_*/muttrc'
+	Per-account 'muttrc''s, that will be sourced from the main 'muttrc'.
+
+SEE ALSO
+--------
+muttererrc(5), mutt(1), muttrc(5), offlineimap(1), msmtp(1)
+
+AUTHOR
+------
+mwnx <mwnx@gmx.com>
