@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e -u
+
+cat <<EOF
+#!/bin/bash
+export MUTTERER_LIBS="\${MUTTERER_LIBS-$1}"
+export MUTTERER_SYSTEM_PRESETS="\${MUTTERER_SYSTEM_PRESETS-$2}"
+
+$3 "\$@"
+EOF
