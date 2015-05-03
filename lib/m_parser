@@ -43,7 +43,8 @@ read_line()
     fi
 }
 
-# is_empty_line line : whether line is empty (comment lines are considered empty)
+# is_empty_line line : whether line is empty (comment lines are considered
+# empty)
 is_empty_line()
 {
     [[ "$1" =~ ^[[:space:]]*('#'.*)?$ ]]

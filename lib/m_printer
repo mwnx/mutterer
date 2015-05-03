@@ -8,7 +8,8 @@ keys()
     for k in "${!settings[@]}"; do printf '%s\n' "$k"; done
 }
 
-# print_multi_field lhs nl_separated_rhss (>stdout) : print a field with multiple lines
+# print_multi_field lhs nl_separated_rhss (>stdout) : print a field with
+# multiple lines
 print_multi_field()
 {
     local IFS=$nl
@@ -107,7 +108,8 @@ print_imap()
             local ks=$(grep "^accounts\.${a}\." <<<"$Ks" | sort)
             local k
             for k in $ks; do
-                print_imap_field "accounts\.${a}\.imap\." "$k" "${settings[$k]}"
+                print_imap_field "accounts\.${a}\.imap\." "$k" \
+                                 "${settings[$k]}"
             done
         done
     } >"$configs_dir/offlineimaprc"
