@@ -65,6 +65,7 @@ What you get from this config file is:
 - Shortcut to switch to various basic boxes for each user (by default:
   "\_j": junk/spam, "\_t": trash, "\_s": sent, "\_i": inbox, "\_d": drafts).
   to switch
+- Shortcut ('S') to sync the currently focused account with offlineimap.
 - Different status bar colour depending on the account you are currently in.
 - Other small details. See presets/{all,defaults,detect} for more details.
 

@@ -51,7 +51,7 @@ mutt.trash                     ?= %box/[Tt][Rr][Aa][Ss][Hh]
 mutt.mbox_type                 ?= Maildir
 goto_account_key               ?= g
 MUTT.macro index,pager         += %{goto_account_key}%{account_key} "\"<change-folder>%{mutt.spoolfile}\n\""
-MUTT.folder-hook \"%{box}/\"/\*  = source ~/.mutterer/configs/_%{id}/muttrc
+MUTT.folder-hook \"%{box}/\"/\* = source ~/.mutterer/configs/_%{id}/muttrc
 
 [accounts %{mutt_defaults_extra:-}]
 goto_subdir_key        ?= _
@@ -61,6 +61,9 @@ mutt.macro index,pager += %{goto_subdir_key}s "\"<change-folder>%{mutt.record}\n
 mutt.macro index,pager += %{goto_subdir_key}d "\"<change-folder>%{mutt.postponed}\n\""
 mutt.macro index,pager += %{goto_subdir_key}t "\"<change-folder>%{mutt.trash}\n\""
 mutt.macro index,pager += %{goto_subdir_key}j "\"<change-folder>%{junk}\n\""
+sync_current_key       ?= S
+xterm_exec             ?= /usr/bin/xterm -e
+mutt.macro index,pager += %{sync_current_key} "\"<shell-escape>%{xterm_exec} 'offlineimap -a %{id} || read -n1'&<enter>\""
 
 [accounts %{imap_defaults:-}]
 imap.Account %{id}.localrepository       ?= local_%{id}
