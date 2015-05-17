@@ -28,4 +28,10 @@ account_key           = J
 mutt.color status     = black magenta
 # The gmail preset will detect good defaults for imap and smtp here
 
+
+# Just use the name as the signature:
+[accounts %all]
+signature = %name
+
+
 . all
