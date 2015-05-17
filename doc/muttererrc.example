@@ -10,7 +10,7 @@ main_account   = john
 folder=${MDIR:-~/.mail/}
 
 [account john]
-name                  = \"John Doe\"
+name                  = John Doe
 address               = johndoe@mycompany.example.com
 password              = mypassword
 imap_host             = imap.mycompany.example.com

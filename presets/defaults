@@ -37,8 +37,8 @@ imap_defaults       += %{defaults:-}
 smtp_defaults       += %{defaults:-}
 
 [accounts %{mutt_defaults:-}]
-mutt.realname                  ?= %{name}
-mutt.my_hdr Name:              ?= %{name}
+mutt.realname                  ?= \"%{name}\"
+mutt.my_hdr Name:              ?= \"%{name}\"
 mutt.from                      ?= %{address}
 mutt.sendmail                  ?= "\"/usr/bin/msmtp -a %{id}\""
 mutt.signature                 ?= "~/.mutterer/%{id}.sig"
