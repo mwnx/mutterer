@@ -1,0 +1,96 @@
+# A neat(ish) way of dealing with mailing lists using mutt only.
+# 
+# To set it up, add 'lists' fields to your account, e.g.
+#
+#     [account John]
+#     name = John Doe
+#     ...
+#     lists.Mutt = mutt-dev@mutt.org mutt-users@mutt.org
+#     lists.SECURITY = debian-security-announce@lists.debian.org
+#
+# This will automatically setup a shortcut (",A" by default) to filter
+# John's inbox; this shortcut has no effect when used from an account with
+# no lists.* configured.
+# Notice how we use two addresses for "Mutt". They will both be considered
+# as belonging to the same mailing list.
+# It will also setup a hook to automatically call this shortcut when
+# entering that user's inbox (in other words, there is rarely any need to
+# use that shortcut at all).
+#
+# Messages belonging to a mailing list are saved in %folder/list_name (e.g.
+# John/Mutt). They are deleted from the inbox unless they are part of a
+# thread to which the user has participated.
+#
+# Depends on: box (see defaults)
+#
+# Optional: mutt.mark_old
+
+:. $MUTTERER_SYSTEM_PRESETS/lib
+
+# list_move_macro %id
+:list_move_macro()
+:{
+:    local id=$1 k
+:    local IFS=$'\n'
+:    for k in $(keys_for_account "$id"); do
+:        if [[ ! "$k" =~ ^accounts\.$id\.lists\.([a-zA-Z0-9_]+)$ ]]; then continue; fi
+:        local list=${BASH_REMATCH[1]}
+:        echo -n "<untag-pattern><kill-line>~A<enter>"
+:        echo -n "<tag-pattern><kill-line>~N %L $list ~(~P)<enter>"
+:        echo -n "<tag-prefix-cond><copy-message><kill-line>=$id/$list<enter>y<end-cond>"
+:        echo -n "<untag-pattern><kill-line>~A<enter>"
+:        echo -n "<tag-pattern><kill-line>~N %L $list !~(~P)<enter>"
+:        echo -n "<tag-prefix-cond><save-message><kill-line>=$id/$list<enter>y<end-cond>"
+:    done
+:    echo -n "<tag-pattern><kill-line>~N<enter>"
+:    echo -n "<tag-prefix-cond><toggle-new><end-cond>"
+:    echo -n "<untag-pattern><kill-line>~A<enter>"
+:}
+
+# list_subs %id
+:list_subs()
+:{
+:    local id=$1 k
+:    local IFS=$'\n'
+:    for k in $(keys_for_account "$id"); do
+:        if [[ ! "$k" =~ ^accounts\.$id\.lists\.([a-zA-Z0-9_]+)$ ]]; then continue; fi
+:        local list=${BASH_REMATCH[1]}
+:        printf '%s\n\n' "$list ${settings[$k]}"
+:    done
+:}
+
+# accounts_using_lists
+:accounts_using_lists()
+:{
+:    local IFS=$'\n'
+:    printf '%s' "${!settings[*]}" |
+:    grep -o '^accounts\.[a-zA-Z0-9_]\+\.lists\.[a-zA-Z0-9_]\+$' |
+:    sed 's/^accounts\.\([a-zA-Z0-9_]\+\)\..*$/\1/' |
+:    sort | uniq
+:}
+
+:accounts_not_using_lists()
+:{
+:    all_accounts_except $(accounts_using_lists)
+:}
+
+[groups]
+using_lists     = $(accounts_using_lists)
+not_using_lists = $(accounts_not_using_lists)
+
+[accounts ${!accounts[@]}]
+list_filter_shortcut ?= ,A
+
+[accounts %using_lists]
+MUTT.subscribe -group     = "$(list_subs "%id")"
+mutt.macro index ,,,l = \"$(list_move_macro "%id")\"
+#TODO: escape special characters (folder-hook expects a regex)
+MUTT.'folder-hook ' += \"%{box}/\"/\* $([[ %{mutt.mark_old:-} == no ]] || echo set mark_old)
+MUTT.'folder-hook ' += \"%{box}/\"/\* bind index %list_filter_shortcut noop
+MUTT.'folder-hook ' += %{mutt.spoolfile} unset mark_old
+MUTT.'folder-hook ' += %{mutt.spoolfile} macro index %list_filter_shortcut push ",,,l"
+MUTT.'folder-hook ' += %{mutt.spoolfile} push ",,,l"
+
+[accounts %not_using_lists]
+mutt.bind index %list_filter_shortcut ?= noop
+mutt.mark_old                         ?= yes

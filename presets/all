@@ -3,3 +3,4 @@
 
 . detect
 . defaults
+. lists
