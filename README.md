@@ -47,6 +47,9 @@ account_key           = J
 mutt.color status     = black magenta
 # The gmail preset will detect good defaults for imap and smtp here
 
+lists.Mutt            = mutt-users@mutt.org
+
+
 . all
 ```
 
@@ -67,6 +70,10 @@ What you get from this config file is:
   to switch
 - Shortcut ('S') to sync the currently focused account with offlineimap.
 - Different status bar colour depending on the account you are currently in.
+- Mailing list organisation using mutt macros and hooks only, thanks to the
+  "lists" preset. Here, emails from the mutt-users mailing list will be
+  automatically saved to JMan/Mutt when entering JMan's inbox. This works
+  differently from Mutt's mbox-hook system; see presets/lists for details.
 - Other small details. See presets/{all,defaults,detect} for more details.
 
 Note also that this program has a fairly modular design and it should
