@@ -43,7 +43,7 @@
 :        echo -n "<tag-prefix-cond><save-message><kill-line>=$id/$list<enter>y<end-cond>"
 :    done
 :    echo -n "<tag-pattern><kill-line>~N<enter>"
-:    echo -n "<tag-prefix-cond><toggle-new><end-cond>"
+:    echo -n "<tag-prefix-cond><set-flag>O<end-cond>"
 :    echo -n "<untag-pattern><kill-line>~A<enter>"
 :}
 
