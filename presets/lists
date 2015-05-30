@@ -53,7 +53,7 @@
 :    local id=$1 k
 :    local IFS=$'\n'
 :    for k in $(keys_for_account "$id"); do
-:        if [[ ! "$k" =~ ^accounts\.$id\.lists\.([a-zA-Z0-9_]+)$ ]]; then continue; fi
+:        [[ "$k" =~ ^accounts\.$id\.lists\.([a-zA-Z0-9_]+)$ ]] || continue
 :        local list=${BASH_REMATCH[1]}
 :        printf '%s\n\n' "$list ${settings[$k]}"
 :    done
@@ -85,8 +85,9 @@ list_filter_shortcut ?= ,A
 MUTT.subscribe -group     = "$(list_subs "%id")"
 mutt.macro index ,,,l = \"$(list_move_macro "%id")\"
 #TODO: escape special characters (folder-hook expects a regex)
-MUTT.'folder-hook ' += \"%{box}/\"/\* $([[ %{mutt.mark_old:-} == no ]] || echo set mark_old)
-MUTT.'folder-hook ' += \"%{box}/\"/\* bind index %list_filter_shortcut noop
+MUTT.'folder-hook ' += $([[ %{mutt.mark_old:-} == no ]] ||\
+                         printn '"%{box}/"/*' set mark_old)
+MUTT.'folder-hook ' += '"%{box}/"/*' bind index %list_filter_shortcut noop
 MUTT.'folder-hook ' += %{mutt.spoolfile} unset mark_old
 MUTT.'folder-hook ' += %{mutt.spoolfile} macro index %list_filter_shortcut push ",,,l"
 MUTT.'folder-hook ' += %{mutt.spoolfile} push ",,,l"
