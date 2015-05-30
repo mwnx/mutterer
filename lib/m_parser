@@ -38,8 +38,23 @@ read_line()
         REPLY=$_unread_line
         _unread_line=
     else
-        read -r || return 1
+        local r
+        read -r r || return 1
         incr_linenum
+        if [[ "$r" =~ ^: ]]; then
+            # The line is inline bash; let bash escape it.
+            REPLY=$r
+            return 0
+        else
+            # Consider a paragraph of lines ending in backslashes as a
+            # single line with the ending backslashes stripped.
+            REPLY=${r%\\}
+            while [[ "$r" =~ \\$ ]]; do
+                read -r r
+                incr_linenum
+                REPLY+=${r%\\}
+            done
+        fi
     fi
 }
 
