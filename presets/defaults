@@ -55,11 +55,11 @@ mutt.trash                     ?= %box/[Tt][Rr][Aa][Ss][Hh]
 mutt.mbox_type                 ?= Maildir
 goto_account_key               ?= g
 MUTT.macro index,pager %{goto_account_key}%{account_key} ?= "\"<change-folder>%{mutt.spoolfile}\n\""
-MUTT.folder-hook \"%{box}/\"/\* ?= source ~/.mutterer/configs/_%{id}/muttrc
+MUTT.folder-hook "\"%{box}/\"/*" ?= source ~/.mutterer/configs/_%{id}/muttrc
 
 [accounts %{mutt_defaults_extra:-}]
 goto_subdir_key        ?= _
-junk                   ?= %box/$(ls "%box" | grep -i '^\(spam\|junk\)$' | head -n1)
+junk                   ?= "%box/$(ls "%box" | grep -i '^\(spam\|junk\)$' | head -n1)"
 mutt.macro index,pager += %{goto_subdir_key}i "\"<change-folder>%{mutt.spoolfile}\n\""
 mutt.macro index,pager += %{goto_subdir_key}s "\"<change-folder>%{mutt.record}\n\""
 mutt.macro index,pager += %{goto_subdir_key}d "\"<change-folder>%{mutt.postponed}\n\""
@@ -73,7 +73,7 @@ mutt.macro index,pager += %{sync_current_key} "\"<shell-escape>%{xterm_exec} 'of
 imap.Account %{id}.localrepository       ?= local_%{id}
 imap.Account %{id}.remoterepository      ?= remote_%{id}
 imap.Repository local_%{id}.type         ?= Maildir
-imap.Repository local_%{id}.localfolders ?= %box
+imap.Repository local_%{id}.localfolders ?= "%box"
 imap.Repository remote_%{id}.remoteuser  ?= %{address}
 imap_type                                ?= IMAP
 imap.Repository remote_%{id}.type        ?= %{imap_type}

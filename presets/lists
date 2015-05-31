@@ -86,8 +86,8 @@ MUTT.subscribe -group     = "$(list_subs "%id")"
 mutt.macro index ,,,l = \"$(list_move_macro "%id")\"
 #TODO: escape special characters (folder-hook expects a regex)
 MUTT.'folder-hook ' += $([[ %{mutt.mark_old:-} == no ]] ||\
-                         printn \"%{box}/\"/\* set mark_old)
-MUTT.'folder-hook ' += \"%{box}/\"/\* bind index %list_filter_shortcut noop
+                         printn "\"%{box}/\"/*" set mark_old)
+MUTT.'folder-hook ' += "\"%{box}/\"/*" bind index %list_filter_shortcut noop
 MUTT.'folder-hook ' += %{mutt.spoolfile} unset mark_old
 MUTT.'folder-hook ' += %{mutt.spoolfile} macro index %list_filter_shortcut push ",,,l"
 MUTT.'folder-hook ' += %{mutt.spoolfile} push ",,,l"
