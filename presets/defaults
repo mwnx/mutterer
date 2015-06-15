@@ -43,7 +43,7 @@ mutt.from                      ?= %{address}
 mutt.sendmail                  ?= "\"/usr/bin/msmtp -a %{id}\""
 mutt.signature                 ?= $(\
     if [[ -z "%{signature:+-}" ]]; then echo "~/.mutterer/%{id}.sig";\
-    else echo "\"echo "%signature" |\"";\
+    else echo "\"echo \\\"%signature\\\" |\"";\
     fi\
 )
 mutt.folder                    ?= %folder/
