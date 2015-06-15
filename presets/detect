@@ -28,7 +28,7 @@ imap_type         ?= Gmail
 imap_filter       ?= "lambda f: f not in '[Gmail]/All Mail'"
 smtp_host         ?= smtp.googlemail.com:465
 smtp.tls          ?= on
-smtp.tls_starttls ?= on
+smtp.tls_starttls ?= off
 
 [accounts %{auto_outlook:-}]
 imap_host         ?= imap-mail.outlook.com:993
