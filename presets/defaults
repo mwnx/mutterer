@@ -91,6 +91,9 @@ smtp.host             ?= %{smtp_host%:*}
 smtp.port            ?~= $([[ ! "%{smtp_host}" =~ : ]] || echo "%{smtp_host#*:}")
 smtp.password         ?= %{password}
 smtp.auth             ?= on
-smtp.tls_trust_file  ?~= $([[ -n "%{smtp.tls_fingerprint:-}" ]] || echo /etc/ssl/certs/ca-certificates.crt)
+smtp.tls_trust_file  ?~= $(\
+    [[ -n "%{smtp.tls_fingerprint:-}" || \
+       "%{smtp.tls_certcheck:-}" == off ]] \
+    || echo /etc/ssl/certs/ca-certificates.crt)
 smtp.logfile          ?= ~/.msmtp/%{id}.log
 # smtp.maildomain ?= 
