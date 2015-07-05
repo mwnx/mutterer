@@ -4,6 +4,17 @@
 # to the nodetect group.
 # Remember that you can also manually add an account to an auto group if you
 # want.
+#
+# For Gmail:
+# - By default, auto_gmail is the same as gmail_with_folders: uses
+#   "[Gmail]/Sent Mail", etc.
+# - If you don't like that, override this behaviour by making your gmail
+#   account a member of either of these two groups:
+#   - gmail_without_folders: just use the standard "Sent", "Drafts", etc.
+#     folders
+#   - gmail_filtering_folders: same as above, but also filter out Gmail's
+#     junky default folders in offlineimap
+
 
 # regex_addresses regex
 :regex_addresses()
@@ -18,17 +29,33 @@
 :}
 
 [groups]
+nodetect     += %{gmail_without_folders:-} %{gmail_filtering_folders:-}
 auto_gmail   += $(regex_addresses '@gmail\.com$')
 auto_outlook += $(regex_addresses '@(hotmail\..*|live\.com|outlook\.com)$')
 auto_gmx     += $(regex_addresses '@gmx\.(com|us)$')
 
-[accounts %{auto_gmail:-}]
+gmail_with_folders    += %{auto_gmail:-}
+gmail_without_folders += %{gmail_filtering_folders:-}
+gmail_base            += %{gmail_with_folders:-} %{gmail_without_folders:-}
+
+# Use this to get gmail with all the junky folders filtered out.
+[accounts %{gmail_filtering_folders:-}]
+imap_filter       ?= "lambda f: f not in [\
+    '[Gmail]/All Mail','[Gmail]/Important','[Gmail]/Drafts',\
+    '[Gmail]/Starred','Personal','Receipts','Travel','Work','[Gmail]/Bin',\
+    '[Gmail]/Sent Mail','[Gmail]/Drafts']"
+
+[accounts %{gmail_base:-}]
 imap_host         ?= imap.googlemail.com
 imap_type         ?= Gmail
 imap_filter       ?= "lambda f: f not in '[Gmail]/All Mail'"
 smtp_host         ?= smtp.googlemail.com:465
 smtp.tls          ?= on
 smtp.tls_starttls ?= off
+
+# Same as auto_gmail.
+[accounts %{gmail_with_folders:-}]
+# TODO: use "[Gmail].Sent Mail", "[Gmail].Drafts", ...
 
 [accounts %{auto_outlook:-}]
 imap_host         ?= imap-mail.outlook.com:993
