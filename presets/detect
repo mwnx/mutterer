@@ -55,7 +55,10 @@ smtp.tls_starttls ?= off
 
 # Same as auto_gmail.
 [accounts %{gmail_with_folders:-}]
-# TODO: use "[Gmail].Sent Mail", "[Gmail].Drafts", ...
+mutt.spoolfile    ?= \"%folder/%id/INBOX\"
+mutt.record       ?= \"%folder/%id/[Gmail].Sent Mail\"
+mutt.postponed    ?= \"%folder/%id/[Gmail].Drafts\"
+mutt.trash        ?= \"%folder/%id/[Gmail].Trash\"
 
 [accounts %{auto_outlook:-}]
 imap_host         ?= imap-mail.outlook.com:993
