@@ -25,6 +25,8 @@
 # Optional: goto_account_key, goto_subdir_key, box, imap_type, imap_ssl,
 #           imap_filter, smtp.tls_fingerprint,
 
+:. $MUTTERER_SYSTEM_PRESETS/lib
+
 # The main_account group should only contain one account.
 [accounts %main_account]
 MUTT.'source ' += ~/.mutterer/configs/_%{id}/muttrc
@@ -74,17 +76,17 @@ mutt.postponed                 ?= $(anycase_file %box/ Drafts)
 mutt.trash                     ?= $(anycase_file %box/ Trash)
 mutt.mbox_type                 ?= Maildir
 goto_account_key               ?= g
-MUTT.macro index,pager %{goto_account_key}%{account_key} ?= "\"<change-folder>%{mutt.spoolfile}\n\""
+MUTT.macro index,pager %{goto_account_key}%{account_key} ?= "\"<change-folder>$(escape_spaces "%{mutt.spoolfile}")\n\""
 MUTT.folder-hook "\"%{box}/\"/*" ?= source ~/.mutterer/configs/_%{id}/muttrc
 
 [accounts %{mutt_defaults_extra:-}]
 goto_subdir_key        ?= _
 junk                   ?= "%box/$(ls "%box" | grep -i '^\(spam\|junk\)$' | head -n1)"
-mutt.macro index,pager += %{goto_subdir_key}i "\"<change-folder>%{mutt.spoolfile}\n\""
-mutt.macro index,pager += %{goto_subdir_key}s "\"<change-folder>%{mutt.record}\n\""
-mutt.macro index,pager += %{goto_subdir_key}d "\"<change-folder>%{mutt.postponed}\n\""
-mutt.macro index,pager += %{goto_subdir_key}t "\"<change-folder>%{mutt.trash}\n\""
-mutt.macro index,pager += %{goto_subdir_key}j "\"<change-folder>%{junk}\n\""
+mutt.macro index,pager += %{goto_subdir_key}i "\"<change-folder>$(escape_spaces "%{mutt.spoolfile}")\n\""
+mutt.macro index,pager += %{goto_subdir_key}s "\"<change-folder>$(escape_spaces "%{mutt.record}")\n\""
+mutt.macro index,pager += %{goto_subdir_key}d "\"<change-folder>$(escape_spaces "%{mutt.postponed}")\n\""
+mutt.macro index,pager += %{goto_subdir_key}t "\"<change-folder>$(escape_spaces "%{mutt.trash}")\n\""
+mutt.macro index,pager += %{goto_subdir_key}j "\"<change-folder>$(escape_spaces "%{junk}")\n\""
 sync_current_key       ?= S
 xterm_exec             ?= /usr/bin/xterm -e
 mutt.macro index,pager += %{sync_current_key} "\"<shell-escape>%{xterm_exec} 'offlineimap -a %{id} || read -n1'&<enter>\""

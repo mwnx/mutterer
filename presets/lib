@@ -14,3 +14,10 @@ all_accounts_except()
     printf '%s\n%s' "${!accounts[*]}" "$(sort <<<"$*" | uniq)" |
     sort | uniq -u
 }
+
+# escape_spaces text : escape spaces with <quote-char> as required by
+# interactive mutt commands
+escape_spaces()
+{
+    sed 's/ /<quote-char> /g' <<< "$1"
+}
