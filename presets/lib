@@ -19,5 +19,5 @@ all_accounts_except()
 # interactive mutt commands
 escape_spaces()
 {
-    sed 's/ /<quote-char> /g' <<< "$1"
+    sed 's/ /<quote-char><space>/g' <<< "$1"
 }
