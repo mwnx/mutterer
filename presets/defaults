@@ -36,6 +36,26 @@ mutt_defaults       += %{defaults:-} %{mutt_defaults_extra:-}
 imap_defaults       += %{defaults:-}
 smtp_defaults       += %{defaults:-}
 
+# anycase text : generates output of the form "[tT][eE][xX][tT]1_[aA]" from
+# an input of the form "text1_A".
+:function anycase()
+:{
+:    sed 's/[a-zA-Z]/[\L&\U&]/g' <<< "$1"
+:}
+
+# anycase_file path_prefix path_suffix
+# E.g. "anycase_file ~/.mail/ John" returns the evaluated form of
+# ~/.mail/[jJ][oO][hH][nN] if a matching file exists, ~/.mail/John otherwise
+# (i.e. the supplied casing is used by default).
+:function anycase_file()
+:{
+:    local pattern=$(anycase "$2")
+:    local file=$(printn "$1"$pattern)
+:    if [[ -e "$file" ]]; then printn "$file"
+:    else printn "$1$2"
+:    fi
+:}
+
 [accounts %{mutt_defaults:-}]
 mutt.realname                  ?= \"%{name}\"
 mutt.my_hdr Name:              ?= \"%{name}\"
@@ -48,10 +68,10 @@ mutt.signature                 ?= $(\
 )
 mutt.folder                    ?= %folder/
 box                            ?= %folder/%id
-mutt.spoolfile                 ?= %box/[Ii][Nn][Bb][Oo][Xx]
-mutt.record                    ?= %box/[Ss][Ee][Nn][Tt]
-mutt.postponed                 ?= %box/[Dd][Rr][Aa][Ff][Tt][Ss]
-mutt.trash                     ?= %box/[Tt][Rr][Aa][Ss][Hh]
+mutt.spoolfile                 ?= $(anycase_file %box/ INBOX)
+mutt.record                    ?= $(anycase_file %box/ Sent)
+mutt.postponed                 ?= $(anycase_file %box/ Drafts)
+mutt.trash                     ?= $(anycase_file %box/ Trash)
 mutt.mbox_type                 ?= Maildir
 goto_account_key               ?= g
 MUTT.macro index,pager %{goto_account_key}%{account_key} ?= "\"<change-folder>%{mutt.spoolfile}\n\""
