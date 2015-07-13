@@ -59,6 +59,7 @@ mutt.spoolfile    ?= \"%folder/%id/INBOX\"
 mutt.record       ?= \"%folder/%id/[Gmail].Sent Mail\"
 mutt.postponed    ?= \"%folder/%id/[Gmail].Drafts\"
 mutt.trash        ?= \"%folder/%id/[Gmail].Trash\"
+junk              ?= \"%folder/%id/[Gmail].Spam\"
 
 [accounts %{auto_outlook:-}]
 imap_host         ?= imap-mail.outlook.com:993
