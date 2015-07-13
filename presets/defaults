@@ -103,7 +103,7 @@ MUTT.folder-hook "\"%{box}/\"/*" ?= source ~/.mutterer/configs/_%{id}/muttrc
 
 [accounts %{mutt_defaults_extra:-}]
 goto_subdir_key        ?= _
-junk                   ?= "%box/$(ls "%box" | grep -i '^\(spam\|junk\)$' | head -n1)"
+junk                   ?= $(first_file "%box/" Spam "$(anycase spam)" "$(anycase junk)")
 mutt.macro index,pager += %{goto_subdir_key}i "\"<change-folder>$(escape_spaces "%{mutt.spoolfile}")\n\""
 mutt.macro index,pager += %{goto_subdir_key}s "\"<change-folder>$(escape_spaces "%{mutt.record}")\n\""
 mutt.macro index,pager += %{goto_subdir_key}d "\"<change-folder>$(escape_spaces "%{mutt.postponed}")\n\""
