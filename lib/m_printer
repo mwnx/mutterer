@@ -58,10 +58,10 @@ print_mutt()
 {
     local a
     for a in "${!accounts[@]}"; do
+        mkdir -p "$configs_dir/_$a"
         {
             print_commented_auto_warning
             echo
-            mkdir -p "$configs_dir/_$a"
             local dir=.mutterer/configs/_$a
             mkdir -p "$dir"
             local k
