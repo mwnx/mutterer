@@ -58,6 +58,28 @@ smtp_defaults       += %{defaults:-}
 :    fi
 :}
 
+# first_file path_prefix folder_candidate1 [...]
+# E.g. "first_file ~/.mail/ Spam Junk" returns the first existing file or
+# directory in ~/.mail/, ~/.mail/Spam otherwise
+:function first_file()
+:{
+:    local dir=$1
+:    shift
+:    local f
+:    local file=
+:    for f in "$@"; do
+:        if [[ -e "$(printn "$dir"$f)" ]]; then
+:            file=$(printn "$dir"$f)
+:            break
+:        fi
+:    done
+:    if [[ -z "$file" ]]; then
+:        printn "${dir}$1"
+:    else
+:        printn "$file"
+:    fi
+:}
+
 [accounts %{mutt_defaults:-}]
 mutt.realname                  ?= \"%{name}\"
 mutt.my_hdr Name:              ?= \"%{name}\"
