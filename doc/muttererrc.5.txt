@@ -120,7 +120,7 @@ documentation for specifics.
 *Note 1*: The generated bash script is run with bash's '-u' option so using
 an unset variable will generate an error, and the process will be aborted.
 If you want to interpret an unset variable as an empty string use
-"${my_var:-}" or "%{my_var:-}" instead of "$my_var" or "%my_var"
+"${'my_var':-}" or "%{'my_var':-}" instead of "$'my_var'" or "%'my_var'"
 respectively.
 
 *Note 2*: Bash expressions are interpreted as if passed to the 'echo'
@@ -143,7 +143,27 @@ muttrc:
 If you want to have quotes in the generated config file, you have to escape
 them like so:
 
-    mutt.signature = \"$SIG_DIR/%{id}.sig\"
+    mutt.signature = "\"$SIG_DIR/%{id}.sig\""
+
+End of line (EOL) escaping
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+Special bash expressions support escaping of the end of line like in bash,
+using a final backslash.
+
+Example:
+
+    myvar = "hello \
+             world"
+
+Results in:
+
+    myvar = "hello world"
+
+Note that mutterer does not interpret double backslashes as single
+backslashes like bash does, therefore if you needed to terminate a string
+with a backslash you would have to quote it. E.g.
+
+    myvar = "hello \\"
 
 Inline bash scripting
 ~~~~~~~~~~~~~~~~~~~~~
@@ -181,6 +201,8 @@ Mutterer is distributed with the following system presets:
   anything useful.
 - detect: presets for detecting proper imap and smtp settings based on
   accounts' email addresses.
+- lists: generates macros for automatically moving mailing list mail from
+  the inbox to specific folders (when configured to do so).
 - all: sources all of the above
 
 See these files themselves for their documentation.
