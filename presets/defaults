@@ -81,21 +81,25 @@ smtp_defaults       += %{defaults:-}
 :}
 
 [accounts %{mutt_defaults:-}]
-mutt.realname                  ?= \"%{name}\"
-mutt.my_hdr Name:              ?= \"%{name}\"
-mutt.from                      ?= %{address}
+mutt.realname                  ?= "\"%{name}\""
+mutt.my_hdr Name:              ?= "\"%{name}\""
+mutt.from                      ?= "%{address}"
 mutt.sendmail                  ?= "\"/usr/bin/msmtp -a %{id}\""
-mutt.signature                 ?= $(\
+mutt.signature                 ?= "$(\
     if [[ -z "%{signature:+-}" ]]; then echo "~/.mutterer/%{id}.sig";\
     else echo "\"echo \\\"%signature\\\" |\"";\
     fi\
-)
-mutt.folder                    ?= %folder/
-box                            ?= %folder/%id
-mutt.spoolfile                 ?= $(anycase_file %box/ INBOX)
-mutt.record                    ?= $(anycase_file %box/ Sent)
-mutt.postponed                 ?= $(anycase_file %box/ Drafts)
-mutt.trash                     ?= $(anycase_file %box/ Trash)
+)"
+mutt.folder                    ?= "%folder/"
+box                            ?= "%folder/%id"
+spoolfile                      ?= "$(anycase_file "%box/" INBOX)"
+record                         ?= "$(anycase_file "%box/" Sent)"
+postponed                      ?= "$(anycase_file "%box/" Drafts)"
+trash                          ?= "$(anycase_file "%box/" Trash)"
+mutt.spoolfile                 ?= "\"%spoolfile\""
+mutt.record                    ?= "\"%record\""
+mutt.postponed                 ?= "\"%postponed\""
+mutt.trash                     ?= "\"%trash\""
 mutt.mbox_type                 ?= Maildir
 goto_account_key               ?= g
 MUTT.macro index,pager %{goto_account_key}%{account_key} ?= "\"<change-folder>$(escape_spaces "%{mutt.spoolfile}")\n\""
@@ -104,10 +108,10 @@ MUTT.folder-hook "\"%{box}/\"/*" ?= source ~/.mutterer/configs/_%{id}/muttrc
 [accounts %{mutt_defaults_extra:-}]
 goto_subdir_key        ?= _
 junk                   ?= $(first_file "%box/" Spam "$(anycase spam)" "$(anycase junk)")
-mutt.macro index,pager += %{goto_subdir_key}i "\"<change-folder>$(escape_spaces "%{mutt.spoolfile}")\n\""
-mutt.macro index,pager += %{goto_subdir_key}s "\"<change-folder>$(escape_spaces "%{mutt.record}")\n\""
-mutt.macro index,pager += %{goto_subdir_key}d "\"<change-folder>$(escape_spaces "%{mutt.postponed}")\n\""
-mutt.macro index,pager += %{goto_subdir_key}t "\"<change-folder>$(escape_spaces "%{mutt.trash}")\n\""
+mutt.macro index,pager += %{goto_subdir_key}i "\"<change-folder>$(escape_spaces "%{spoolfile}")\n\""
+mutt.macro index,pager += %{goto_subdir_key}s "\"<change-folder>$(escape_spaces "%{record}")\n\""
+mutt.macro index,pager += %{goto_subdir_key}d "\"<change-folder>$(escape_spaces "%{postponed}")\n\""
+mutt.macro index,pager += %{goto_subdir_key}t "\"<change-folder>$(escape_spaces "%{trash}")\n\""
 mutt.macro index,pager += %{goto_subdir_key}j "\"<change-folder>$(escape_spaces "%{junk}")\n\""
 sync_current_key       ?= S
 xterm_exec             ?= /usr/bin/xterm -e
@@ -135,9 +139,9 @@ smtp.host             ?= %{smtp_host%:*}
 smtp.port            ?~= $([[ ! "%{smtp_host}" =~ : ]] || echo "%{smtp_host#*:}")
 smtp.password         ?= %{password}
 smtp.auth             ?= on
-smtp.tls_trust_file  ?~= $(\
+smtp.tls_trust_file  ?~= "$(\
     [[ -n "%{smtp.tls_fingerprint:-}" || \
        "%{smtp.tls_certcheck:-}" == off ]] \
-    || echo /etc/ssl/certs/ca-certificates.crt)
+    || echo /etc/ssl/certs/ca-certificates.crt)"
 smtp.logfile          ?= ~/.msmtp/%{id}.log
 # smtp.maildomain ?= 
