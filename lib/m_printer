@@ -62,8 +62,6 @@ print_mutt()
         {
             print_commented_auto_warning
             echo
-            local dir=.mutterer/configs/_$a
-            mkdir -p "$dir"
             local k
             for k in "${!settings[@]}"; do
                 if [[ "$k" =~ ^accounts\.${a}\.mutt\.(.*)$ ]]; then
