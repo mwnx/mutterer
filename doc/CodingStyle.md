@@ -406,12 +406,17 @@ rm file
 ### `set -e -u`
 
 Always use `set -eu` (equivalent to `set -e -u`) at the start of each bash
-file. If a it's ok for a command to fail and you don't need error handling,
+file. If it's ok for a command to fail and you don't need error handling,
 just make that behaviour explicit with a construct such as:
 
 ``` bash
 command_that_may_fail_without_causing_problems || true
 ```
+
+If a variable may be unset and you just want to get an empty string out of
+it when it is unset −as you would when using it normally without the `-u`
+option− use the following construct: `"${myvar-}"`, or equivalently
+`"${myvar:-}"`.
 
 http://mywiki.wooledge.org/BashFAQ/105
 
