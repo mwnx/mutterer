@@ -108,3 +108,5 @@ Currently supported email domains are:
 - `gmx.com`, `gmx.us`
 - `outlook.com`, `live.com`, `hotmail.*`
 - `gmail.com`
+
+To contribute code, see "doc/CodingStyle.md".
