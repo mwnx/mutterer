@@ -1,0 +1,2 @@
+[accounts %{mutt_defaults:-}]
+mutt.header_cache              ?= \"%folder/.header_cache/%id/\"
