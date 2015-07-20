@@ -100,11 +100,11 @@ going with "mutterer install" (**see above WARNING first**).
 
 Contributing
 ------------
-You can help by contributing presets for various email providers. See
-"presets/detect".
+The simplest way you can help is by contributing presets for various email
+providers. See "presets/detect".
 
 Currently supported email domains are:
 
-- gmx.com
-- hotmail.com
-- gmail.com
+- `gmx.com`, `gmx.us`
+- `outlook.com`, `live.com`, `hotmail.*`
+- `gmail.com`
