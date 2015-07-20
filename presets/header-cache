@@ -9,4 +9,4 @@
 #     . header-cache
 
 [accounts %{mutt_defaults:-}]
-mutt.header_cache              ?= \"%folder/.header_cache/%id/\"
+mutt.header_cache              ?= "\"%folder/.header_cache/%id/\""
