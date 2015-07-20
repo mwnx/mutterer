@@ -1,2 +1,12 @@
+# A reasonable preset for per-account header_cache (see muttrc(5)).
+#
+# Source *after* the "defaults" (or "all") preset.
+# Example:
+#
+#     ...
+#     
+#     . all
+#     . header-cache
+
 [accounts %{mutt_defaults:-}]
 mutt.header_cache              ?= \"%folder/.header_cache/%id/\"
