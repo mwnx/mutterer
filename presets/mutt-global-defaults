@@ -1,0 +1,18 @@
+# Additional global defaults for mutt.
+#
+# These are global bindings, so you'll want to use a dummy account to bind
+# them to. For example:
+#
+#     [groups]
+#     mutt_global_defaults = GLOBAL
+#
+# mutt_global_defaults: sets and sources alias file (and maybe more to come
+# later)
+#
+# Optional:
+# - alias_file: default is ~/.mutt/alias
+
+[accounts %{mutt_global_defaults:-}]
+alias_file        ?= ~/.mutt/alias
+MUTT.alias_file   ?= "\"%alias_file\""
+MUTT.'source '    += "\"%alias_file\""
