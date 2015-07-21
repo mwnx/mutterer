@@ -4,3 +4,5 @@
 . detect
 . defaults
 . lists
+. mutt-global-defaults
+. mutt-vimification
