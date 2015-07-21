@@ -104,6 +104,8 @@ mutt.mbox_type                 ?= Maildir
 goto_account_key               ?= g
 MUTT.macro index,pager %{goto_account_key}%{account_key} ?= "\"<change-folder>$(escape_spaces "%{mutt.spoolfile}")\n\""
 MUTT.folder-hook "\"%{box}/\"/*" ?= source ~/.mutterer/configs/_%{id}/muttrc
+MUTT.'mailboxes ' ?~= $([[ ! -d "%{box}" ]] || \
+    echo "`find \"%box\" -maxdepth 1 -mindepth 0 -type d -printf \"'%box/%""P' \"`")
 
 [accounts %{mutt_defaults_extra:-}]
 goto_subdir_key        ?= _
