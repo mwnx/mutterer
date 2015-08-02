@@ -83,6 +83,11 @@ MUTT.bind index       "%{mutt_subthread_leader}t" ?= tag-thread
 MUTT.bind index,pager "%{mutt_subthread_leader}n" ?= next-subthread
 MUTT.bind index,pager "%{mutt_subthread_leader}p" ?= previous-subthread
 MUTT.bind index,pager "%{mutt_subthread_leader}r" ?= read-subthread
+MUTT.bind index,pager '}' ?= next-thread
+MUTT.bind index,pager '{' ?= previous-thread
+
+# Remove Esc- bindings (for which we provided replacements above)
+MUTT.bind index,pager '<Esc>' ?= noop
 
 [accounts %{mutt_vim_sidebar:-}]
 mutt.bind index,pager '\Cp' ?= sidebar-prev
