@@ -80,6 +80,9 @@ smtp_defaults       += %{defaults:-}
 :    fi
 :}
 
+[general]
+imap.pythonfile = "$MUTTERER_SYSTEM_PRESETS/offlineimap_pythonfile.py"
+
 [accounts %{mutt_defaults:-}]
 mutt.realname                  ?= "\"%{name}\""
 mutt.my_hdr Name:              ?= "\"%{name}\""
@@ -131,7 +134,9 @@ imap_remote.remotehost               ?= %{imap_host%:*}
 imap_remote.remoteport              ?~= $([[ ! "%{imap_host}" =~ : ]] ||\
                                           echo "%{imap_host#*:}")
 imap_remote.ssl                     ?~= %{imap_ssl:-}
-imap_remote.remotepass               ?= %{password}
+imap_remote.remotepass              ?~= %{password:-}
+imap_remote.remotepasseval          ?~= "$([[ -n "%{password:-}" ]] ||\
+                                           printn "mailpasswd(\"%{id}\")")"
 imap_remote.folderfilter            ?~= %{imap_filter:-}
 # imap_remote.sslcacertfile = ...
 
@@ -140,11 +145,13 @@ smtp.user             ?= %{address}
 smtp.from             ?= %{address}
 smtp.host             ?= %{smtp_host%:*}
 smtp.port            ?~= $([[ ! "%{smtp_host}" =~ : ]] || echo "%{smtp_host#*:}")
-smtp.password         ?= %{password}
+smtp.password        ?~= %{password:-}
 smtp.auth             ?= on
 smtp.tls_trust_file  ?~= "$(\
     [[ -n "%{smtp.tls_fingerprint:-}" || \
        "%{smtp.tls_certcheck:-}" == off ]] \
     || echo /etc/ssl/certs/ca-certificates.crt)"
 smtp.logfile          ?= ~/.msmtp/%{id}.log
+smtp.passwordeval    ?~= $([[ -n "%{password:-}" ]] || printn \
+    "gpg --use-agent --quiet --batch -d ~/.offlineimap/keys/%{id}.asc")
 # smtp.maildomain ?= 
