@@ -125,13 +125,17 @@ print_imap()
             printf 'accounts = %s\n' "$(tr ' ' ',' <<<"${!accounts[@]}")"
         fi
         local IFS=$nl
-        local Ks=$(keys | grep '^accounts\.[^.]\+\.imap\.')
+        local Ks=$(
+            keys |
+            grep '^accounts\.[^.]\+\.imap\(\|_local\|_remote\)\.')
         local a
         for a in "${!accounts[@]}"; do
             local ks=$(grep "^accounts\.${a}\." <<<"$Ks" | sort)
             local k
             for k in $ks; do
-                print_imap_field "accounts\.${a}\.imap\." "$k" \
+                # Expand imap_local and imap_remote "macros":
+                local lhs=$(sed 's/^\(accounts\.\([^.]\+\)\.imap\)_\(local\|remote\)\./\1.Repository \3_\2./' <<< "$k")
+                print_imap_field "accounts\.${a}\.imap\." "$lhs" \
                                  "${settings[$k]}"
             done
         done

@@ -120,19 +120,20 @@ xterm_exec             ?= /usr/bin/xterm -e
 mutt.macro index,pager += %{sync_current_key} "\"<shell-escape>%{xterm_exec} 'offlineimap -a %{id} || read -n1'&<enter>\""
 
 [accounts %{imap_defaults:-}]
-imap.Account %{id}.localrepository       ?= local_%{id}
-imap.Account %{id}.remoterepository      ?= remote_%{id}
-imap.Repository local_%{id}.type         ?= Maildir
-imap.Repository local_%{id}.localfolders ?= "%box"
-imap.Repository remote_%{id}.remoteuser  ?= %{address}
-imap_type                                ?= IMAP
-imap.Repository remote_%{id}.type        ?= %{imap_type}
-imap.Repository remote_%{id}.remotehost  ?= %{imap_host%:*}
-imap.Repository remote_%{id}.remoteport ?~= $([[ ! "%{imap_host}" =~ : ]] || echo "%{imap_host#*:}")
-imap.Repository remote_%{id}.ssl        ?~= %{imap_ssl:-}
-imap.Repository remote_%{id}.remotepass  ?= %{password}
-imap.Repository remote_%{id}.folderfilter ?~= %{imap_filter:-}
-# imap.Repository.remote_${id}.sslcacertfile = ...
+imap.Account %{id}.localrepository   ?= local_%{id}
+imap.Account %{id}.remoterepository  ?= remote_%{id}
+imap_local.type                      ?= Maildir
+imap_local.localfolders              ?= "%box"
+imap_remote.remoteuser               ?= %{address}
+imap_type                            ?= IMAP
+imap_remote.type                     ?= %{imap_type}
+imap_remote.remotehost               ?= %{imap_host%:*}
+imap_remote.remoteport              ?~= $([[ ! "%{imap_host}" =~ : ]] ||\
+                                          echo "%{imap_host#*:}")
+imap_remote.ssl                     ?~= %{imap_ssl:-}
+imap_remote.remotepass               ?= %{password}
+imap_remote.folderfilter            ?~= %{imap_filter:-}
+# imap_remote.sslcacertfile = ...
 
 [accounts %{smtp_defaults:-}]
 smtp.user             ?= %{address}

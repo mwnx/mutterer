@@ -96,8 +96,10 @@ Supported per-account configuration prefixes are:
 - mutt.'option' : Add 'option' to the account's mutt configuration file.
 - MUTT.'option' : Add 'option' to the mutt's main configuration file which
   is loaded by mutt on startup.
-- imap.'option' : Add 'option' to offlineimap's configuration for the
-  current user.
+- imap.'section name'.'option' : Add 'option' in section ['section name'] to
+  offlineimap's configuration.
+* imap_local.'option' : Same as imap.Repository local_%id.'option'
+* imap_remote.'option' : Same as imap.Repository remote_%id.'option'
 - smtp.'option' : Add 'option' to msmtp's configuration for the current
   user.
 
