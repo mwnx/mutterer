@@ -1,2 +1,3 @@
 doc/call-graph.png
+*.pyc
 *.[0-9]
