@@ -1,7 +1,7 @@
-# Shortcut redefinitions to make mutt act more like vim.
+# The old version of mutt-vimification, for mutt 1.5.21 (debian wheezy's
+# version).
 #
-# For use with mutt >=1.5.23 (debian jessie's version of mutt). If you are
-# using an older version of mutt, use mutt-vimification-1.5.21.
+# Shortcut redefinitions to make mutt act more like vim.
 #
 # These are global bindings, so you'll want to use a dummy account to bind
 # them to. For example:
@@ -29,37 +29,37 @@ mutt_vim_sidebar += %{mutt_vim_all:-}
 # Yes, this is pretty nasty ;)
 _qmark_char = '?'
 
-mutt_leader                          ?= ','
-mutt_subthread_leader                ?= "%mutt_leader"
-urlview                              ?= urlview
-MUTT.bind index       'za'           ?= collapse-thread
-MUTT.bind index       'zR'           ?= collapse-all
-MUTT.bind index       'zM'           ?= collapse-all
-MUTT.bind index       'zz'           ?= current-middle
-MUTT.bind index,pager '\Cf'          ?= next-page
-MUTT.bind index,pager '\Cb'          ?= previous-page
-MUTT.bind index       'G'            ?= last-entry
-MUTT.bind pager       'G'            ?= bottom
-MUTT.bind index       'gg'           ?= first-entry
-MUTT.bind pager       'gg'           ?= top
-MUTT.bind index,pager '\Ce'          ?= next-line
-MUTT.bind index,pager '\Cy'          ?= previous-line
-MUTT.bind pager       '<Down>'       ?= next-line
-MUTT.bind pager       '<Up>'         ?= previous-line
-MUTT.bind index       'L'            ?= bottom-page
-MUTT.bind index,pager 'N'            ?= search-opposite
+mutt_leader                       ?= ','
+mutt_subthread_leader             ?= "%mutt_leader"
+urlview                           ?= urlview
+MUTT.bind index       'za'        ?= collapse-thread
+MUTT.bind index       'zR'        ?= collapse-all
+MUTT.bind index       'zM'        ?= collapse-all
+MUTT.bind index       'zz'        ?= current-middle
+MUTT.bind index,pager '\Cf'       ?= next-page
+MUTT.bind index,pager '\Cb'       ?= previous-page
+MUTT.bind index       'G'         ?= last-entry
+MUTT.bind pager       'G'         ?= bottom
+MUTT.bind index       'gg'        ?= first-entry
+MUTT.bind pager       'gg'        ?= top
+MUTT.bind index,pager '\Ce'       ?= next-line
+MUTT.bind index,pager '\Cy'       ?= previous-line
+MUTT.bind pager       '<Down>'    ?= next-line
+MUTT.bind pager       '<Up>'      ?= previous-line
+MUTT.bind index       'L'         ?= bottom-page
+MUTT.bind index,pager 'N'         ?= search-opposite
 MUTT.bind index,pager "%_qmark_char" ?= search-reverse
-MUTT.bind index,pager '<backtab>'    ?= previous-new-then-unread
-MUTT.macro pager      'l'            ?= "|%urlview\n"
+MUTT.bind index,pager '<backtab>' ?= previous-new-then-unread
+MUTT.macro pager      'l'         ?= "|%urlview\n"
 
 # Rebind default mutt bindings lost due to the above.
-MUTT.bind index,pager "%{mutt_leader}\CF"          ?= forget-passphrase
+MUTT.bind index,pager "%{mutt_leader}F"           ?= forget-passphrase
     # Originally ^F
-MUTT.bind index       "%{mutt_leader}G"            ?= fetch-mail
+MUTT.bind index       "%{mutt_leader}G"           ?= fetch-mail
     # Originally G
-MUTT.bind pager       "%{mutt_leader}E"            ?= edit-type
+MUTT.bind pager       "%{mutt_leader}E"           ?= edit-type
     # Originally ^E
-MUTT.bind index       "%{mutt_leader}N"            ?= toggle-new
+MUTT.bind index       "%{mutt_leader}N"           ?= toggle-new
     # Originally N
 MUTT.bind index,pager "%{mutt_leader}%_qmark_char" ?= help
     # Originally ?
@@ -70,8 +70,7 @@ MUTT.bind index,pager "%{mutt_leader}%_qmark_char" ?= help
 ###MUTT.bind index,pager "%{mutt_leader}r"           ?= reply
 MUTT.bind index,pager "%{mutt_leader}g"           ?= group-reply
 MUTT.bind index,pager "%{mutt_leader}L"           ?= list-reply
-MUTT.bind index,pager "%{mutt_leader}f"           ?= flag-message
-MUTT.bind index,pager "%{mutt_leader}F"           ?= forward-to-group
+MUTT.bind index,pager "%{mutt_leader}f"           ?= forward-message
 MUTT.bind index,pager "%{mutt_leader}b"           ?= bounce-message
 MUTT.bind index,pager "%{mutt_leader}k"           ?= mail-key
 MUTT.bind compose     "%{mutt_leader}k"           ?= attach-key
