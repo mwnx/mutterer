@@ -12,13 +12,22 @@
 # 'defaults_extra' depending on your preference.
 #
 # Depends on:
-# - folder: shortcut for mutt.folder
-# - name: shortcut for mutt.realname
-# - address: shortcut for mutt.from
-# - password: shortcut for smtp.password and imap.password
+# - folder:    Shortcut for mutt.folder.
+# - name:      Shortcut for mutt.realname.
+# - address:   Shortcut for mutt.from.
+# - password:  Shortcut for smtp.password and imap.password, or, if no
+#              password is provided, mutterer will instruct offlineimap and
+#              msmtp to attempt to decrypt a gpg encrypted file for the
+#              current user:
+#                  ~/.mutterer/keys/%id.asc
+#              This file should contain only the password and be encrypted
+#              with one of your PGP keys.
+#              If you have gpg-agent running, it should prompt you for a
+#              passphrase when you attempt to send or receive email.
 # - smtp_host: Either smtp.host or smpt.host:smtp.port
 #              e.g. example.com or example.com:666
 # - imap_host: Same as smtp_host but for imap
+#
 # smtp_host and imap_host are in the format: host(:port)?
 # e.g. mail.example.com or mail.example.com:999
 #
