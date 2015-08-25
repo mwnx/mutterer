@@ -14,7 +14,7 @@ import subprocess
 import imp
 
 def mailpasswd(accountName):
-    keysDirectory = os.path.expanduser("~/.offlineimap/keys/");
+    keysDirectory = os.path.expanduser("~/.mutterer/keys/");
     path = keysDirectory + accountName + ".asc"
     args = ["gpg", "--use-agent", "--quiet", "--batch", "-d", path]
     try:

@@ -153,5 +153,5 @@ smtp.tls_trust_file  ?~= "$(\
     || echo /etc/ssl/certs/ca-certificates.crt)"
 smtp.logfile          ?= ~/.msmtp/%{id}.log
 smtp.passwordeval    ?~= $([[ -n "%{password:-}" ]] || printn \
-    "gpg --use-agent --quiet --batch -d ~/.offlineimap/keys/%{id}.asc")
+    "gpg --use-agent --quiet --batch -d ~/.mutterer/keys/%{id}.asc")
 # smtp.maildomain ?= 
