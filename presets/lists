@@ -27,14 +27,15 @@
 
 :. $MUTTERER_SYSTEM_PRESETS/lib
 
-# list_move_macro %id
+# list_move_macro %id %box
 :list_move_macro()
 :{
-:    local id=$1 k
+:    local id=$1 box=$2 k
 :    local IFS=$'\n'
 :    for k in $(keys_for_account "$id"); do
 :        if [[ ! "$k" =~ ^accounts\.$id\.lists\.([a-zA-Z0-9_]+)$ ]]; then continue; fi
 :        local list=${BASH_REMATCH[1]}
+:        mkdir -p "$box/$list"/{cur,new,tmp}
 :        echo -n "<untag-pattern><kill-line>~A<enter>"
 :        echo -n "<tag-pattern><kill-line>~N %L $list ~(~P)<enter>"
 :        echo -n "<tag-prefix-cond><copy-message><kill-line>=$id/$list<enter>y<end-cond>"
@@ -83,7 +84,7 @@ list_filter_shortcut ?= ,A
 
 [accounts %using_lists]
 MUTT.subscribe -group     = "$(list_subs "%id")"
-mutt.macro index ,,,l = \"$(list_move_macro "%id")\"
+mutt.macro index ,,,l = \"$(list_move_macro "%id" "%box")\"
 #TODO: escape special characters (folder-hook expects a regex)
 MUTT.'folder-hook ' += $([[ %{mutt.mark_old:-} == no ]] ||\
                          printn "\"%{box}/\"/*" set mark_old)
