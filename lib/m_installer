@@ -16,18 +16,14 @@ _install()
 
 _make_script()
 {
+    mkdir -p "$configs_dir"
     cat "$MUTTERER_LIBS/bash_script_base" > "$configs_dir/script.bash"
     parse_file "$MUTTERERRC" >> "$configs_dir/script.bash"
 }
 
-_source_script()
-{
-    . "$configs_dir/script.bash"
-        echo "${!settings[@]}"
-}
-
 make_config()
 {
+    mkdir -p "$(dirname "$OFFLINEIMAPLOCK")"
     {
         flock -n 9 || error "Couldn't capture offlineimap lock. Exiting."
         _make_script
