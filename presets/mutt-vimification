@@ -94,6 +94,11 @@ MUTT.bind index,pager '{' ?= previous-thread
 MUTT.bind index,pager '<Esc>' ?= noop
 
 [accounts %{mutt_vim_sidebar:-}]
-mutt.bind index,pager '\Cp' ?= sidebar-prev
-mutt.bind index,pager '\Cn' ?= sidebar-next
-mutt.bind index,pager '\Co' ?= sidebar-open
+# Same as for '?' with '_qmark_char' above, for '+'
+_plus_char = '+'
+
+MUTT.bind index,pager '\Cp'         ?= sidebar-prev
+MUTT.bind index,pager '\Cn'         ?= sidebar-next
+MUTT.bind index,pager '\Co'         ?= sidebar-open
+MUTT.bind index,pager '-'           ?= sidebar-scroll-up
+MUTT.bind index,pager "%_plus_char" ?= sidebar-scroll-down
