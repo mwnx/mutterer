@@ -1,5 +1,5 @@
 # A neat(ish) way of dealing with mailing lists using mutt only.
-# 
+#
 # To set it up, add 'lists' fields to your account, e.g.
 #
 #     [account John]
@@ -7,10 +7,15 @@
 #     ...
 #     lists.Mutt = mutt-dev@mutt.org mutt-users@mutt.org
 #     lists.SECURITY = debian-security-announce@lists.debian.org
+#     lists.Haskell = haskell-cafe@haskell.org \
+#                     '[Haskell-cafe]'
 #
 # This will automatically setup a shortcut (",A" by default) to filter
 # John's inbox; this shortcut has no effect when used from an account with
 # no lists.* configured.
+# A mailing list can be matched by either the list's email address or a tag
+# that appears in the subject line, specified in the form '[tag]', as in the
+# example.
 # Notice how we use two addresses for "Mutt". They will both be considered
 # as belonging to the same mailing list.
 # It will also setup a hook to automatically call this shortcut when
@@ -23,9 +28,28 @@
 #
 # Depends on: box (see defaults)
 #
-# Optional: mutt.mark_old
+# Optional: mutt.mark_old, list_filter_shortcut
 
 :. $MUTTERER_SYSTEM_PRESETS/lib
+
+# list_move_with_expr folder expr
+:list_move_with_expr()
+:{
+:    local folder=$1 expr=$2
+:    echo -n "<untag-pattern><kill-line>~A<enter>"
+:    echo -n "<tag-pattern><kill-line>~N $expr ~(~P)<enter>"
+:    echo -n "<tag-prefix-cond><copy-message><kill-line>$folder<enter>y<end-cond>"
+:    echo -n "<untag-pattern><kill-line>~A<enter>"
+:    echo -n "<tag-pattern><kill-line>~N $expr !~(~P)<enter>"
+:    echo -n "<tag-prefix-cond><save-message><kill-line>$folder<enter>y<end-cond>"
+:}
+
+# extract_tags words
+:extract_tags()
+:{
+:    sed 's/\s/\n/g' <<< "$1" |
+:    grep '^\[.*\]$'
+:}
 
 # list_move_macro %id %box
 :list_move_macro()
@@ -36,16 +60,21 @@
 :        if [[ ! "$k" =~ ^accounts\.$id\.lists\.([a-zA-Z0-9_]+)$ ]]; then continue; fi
 :        local list=${BASH_REMATCH[1]}
 :        mkdir -p "$box/$list"/{cur,new,tmp}
-:        echo -n "<untag-pattern><kill-line>~A<enter>"
-:        echo -n "<tag-pattern><kill-line>~N %L $list ~(~P)<enter>"
-:        echo -n "<tag-prefix-cond><copy-message><kill-line>=$id/$list<enter>y<end-cond>"
-:        echo -n "<untag-pattern><kill-line>~A<enter>"
-:        echo -n "<tag-pattern><kill-line>~N %L $list !~(~P)<enter>"
-:        echo -n "<tag-prefix-cond><save-message><kill-line>=$id/$list<enter>y<end-cond>"
+:        local tags=$(extract_tags "${settings[$k]}")
+:        local tag_exprs=$(for t in $tags; do printf " | ~s '^%s'" "$t"; done)
+:        list_move_with_expr "=$id/$list" "(%L $list $tag_exprs)"
 :    done
 :    echo -n "<tag-pattern><kill-line>~N<enter>"
 :    echo -n "<tag-prefix-cond><set-flag>O<end-cond>"
 :    echo -n "<untag-pattern><kill-line>~A<enter>"
+:}
+
+# extract_addresses words
+:extract_addresses()
+:{
+:    sed 's/\s/\n/g' <<< "$1" |
+:    grep -v '^\[.*\]$' |
+:    tr '\n' ' '
 :}
 
 # list_subs %id
@@ -56,7 +85,10 @@
 :    for k in $(keys_for_account "$id"); do
 :        [[ "$k" =~ ^accounts\.$id\.lists\.([a-zA-Z0-9_]+)$ ]] || continue
 :        local list=${BASH_REMATCH[1]}
-:        printf '%s\n\n' "$list ${settings[$k]}"
+:        local addrs=$(extract_addresses "${settings[$k]}")
+:        if [[ -n "$addrs" ]]; then
+:            printf '%s\n\n' "$list $addrs"
+:        fi
 :    done
 :}
 
@@ -83,7 +115,7 @@ not_using_lists = $(accounts_not_using_lists)
 list_filter_shortcut ?= ,A
 
 [accounts %using_lists]
-MUTT.subscribe -group     = "$(list_subs "%id")"
+MUTT.subscribe -group = "$(list_subs "%id")"
 mutt.macro index ,,,l = \"$(list_move_macro "%id" "%box")\"
 #TODO: escape special characters (folder-hook expects a regex)
 MUTT.'folder-hook ' += $([[ %{mutt.mark_old:-} == no ]] ||\
