@@ -291,6 +291,7 @@ parse_source()
         for i in "$MUTTERER_DIR/presets/$f" \
                  "$MUTTERER_SYSTEM_PRESETS/$f" \
                  "$f"; do
+            i=${i/#\~/$HOME}
             if [[ -e "$i" ]]; then file=$i; break; fi
         done
         [[ -z "$file" ]] && parse_error "File not found: '$f'."
