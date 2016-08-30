@@ -136,8 +136,8 @@ mutt.macro index,pager += %{sync_current_key} "\"<shell-escape>%{xterm_exec} 'of
 sslcacertfile                        ?= /etc/ssl/certs/ca-certificates.crt
 
 [accounts %{imap_defaults:-}]
-imap.Account %{id}.localrepository   ?= local_%{id}
-imap.Account %{id}.remoterepository  ?= remote_%{id}
+imap_account.localrepository         ?= local_%{id}
+imap_account.remoterepository        ?= remote_%{id}
 imap_local.type                      ?= Maildir
 imap_local.localfolders              ?= "%box"
 imap_remote.remoteuser               ?= %{address}
