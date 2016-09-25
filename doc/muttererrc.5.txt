@@ -98,6 +98,7 @@ Supported per-account configuration prefixes are:
   is loaded by mutt on startup.
 - imap.'section name'.'option' : Add 'option' in section ['section name'] to
   offlineimap's configuration.
+* imap_account.'option' : Same as imap.Account %id.'option'
 * imap_local.'option' : Same as imap.Repository local_%id.'option'
 * imap_remote.'option' : Same as imap.Repository remote_%id.'option'
 - smtp.'option' : Add 'option' to msmtp's configuration for the current
@@ -193,6 +194,8 @@ if it were pasted at that point in the file:
 - "$MUTTERER_SYSTEM_PRESETS/'path'"
 - 'path' (absolute path or path relative to the current directory)
 
+A leading tilde ('~') within a path will be replaced by the value of the
+environment variable '$HOME'.
 It is an error if none of these files exist.
 
 System presets
