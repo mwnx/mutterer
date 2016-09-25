@@ -70,7 +70,8 @@ Statements in these sections are of one of these forms:
     'lhs' ?~= 'rhs'
     'lhs'  += 'rhs'
 
-where 'lhs' is a per-account setting ([a-Z][a-Z0-9_ ]*\.([a-Z][a-Z0-9_ ]*)*)
+where 'lhs' is a per-account setting
+([a-Z][a-Z0-9_ ]\*\.([a-Z][a-Z0-9_ ]\*)\*)
 and 'rhs' is a *special bash expression*.
 
 In both the left hand side and the right hand side, *%-variables* are
@@ -82,7 +83,7 @@ operator as follows:
 - = : Assign the value of 'rhs' to 'lhs'
 - ?= : If 'lhs' is unset assign the value of 'rhs' to 'lhs'
 - ~= : If 'rhs' is non-empty assign the value of 'rhs' to 'lhs'
-- ?~= : If 'lhs' is unset *and* 'rhs' is non-empty assign the value of
+- ?~= : If 'lhs' is unset *and*{nbsp}__rhs__ is non-empty assign the value of
   'rhs' to 'lhs'
 - += : Assign the value of "'$lhs'#\n#'rhs'" to 'lhs' where '$lhs' is the
   current value of the 'lhs' setting (or the empty string if it is unset)
