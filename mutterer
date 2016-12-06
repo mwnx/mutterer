@@ -3,8 +3,12 @@
 
 set -e -u
 
-export MUTTERER_LIBS="${MUTTERER_LIBS-$(dirname "$0")/lib}"
-export MUTTERER_SYSTEM_PRESETS="${MUTTERER_SYSTEM_PRESETS-$(dirname "$0")/presets}"
+if [[ -z ${MUTTERER_LIBS+_} || -z ${MUTTERER_SYSTEM_PRESETS+_} ]]; then
+    dir=$(dirname "$(readlink -f "$0")")
+fi
+
+export MUTTERER_LIBS="${MUTTERER_LIBS-$dir/lib}"
+export MUTTERER_SYSTEM_PRESETS="${MUTTERER_SYSTEM_PRESETS-$dir/presets}"
 
 . "$MUTTERER_LIBS/m_common"
 . "$MUTTERER_LIBS/m_installer"
