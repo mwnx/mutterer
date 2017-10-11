@@ -130,7 +130,7 @@ mutt.macro index,pager += %{goto_subdir_key}t "\"<change-folder>$(escape_spaces 
 mutt.macro index,pager += %{goto_subdir_key}j "\"<change-folder>$(escape_spaces "%{junk}")\n\""
 sync_current_key       ?= S
 xterm_exec             ?= /usr/bin/xterm -e
-mutt.macro index,pager += %{sync_current_key} "\"<shell-escape>%{xterm_exec} 'offlineimap -a %{id} || read -n1'&<enter>\""
+mutt.macro index,pager += %{sync_current_key} "\"<shell-escape>%{xterm_exec} 'offlineimap -o -a %{id} || read -n1'&<enter>\""
 
 [accounts %{ssl_defaults:-}]
 sslcacertfile                        ?= /etc/ssl/certs/ca-certificates.crt
