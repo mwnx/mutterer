@@ -1,7 +1,7 @@
 # Shortcut redefinitions to make mutt act more like vim.
 #
-# For use with mutt >=1.9 (ubuntu 18.04's version of mutt). If you are
-# using an older version of mutt, use mutt-vimification-1.5.21.
+# For use with neomutt >=1.7.2 (debian stretch's version of mutt). If you
+# are using an older version of mutt, use mutt-vimification-1.5.21.
 #
 # These are global bindings, so you'll want to use a dummy account to bind
 # them to. For example:
@@ -71,7 +71,7 @@ MUTT.bind index,pager "%{mutt_leader}%_qmark_char" ?= help
 MUTT.bind index,pager "%{mutt_leader}g"           ?= group-reply
 MUTT.bind index,pager "%{mutt_leader}L"           ?= list-reply
 MUTT.bind index,pager "%{mutt_leader}f"           ?= flag-message
-#MUTT.bind index,pager "%{mutt_leader}F"           ?= forward-to-group
+MUTT.bind index,pager "%{mutt_leader}F"           ?= forward-to-group
 MUTT.bind index,pager "%{mutt_leader}b"           ?= bounce-message
 MUTT.bind index,pager "%{mutt_leader}k"           ?= mail-key
 MUTT.bind compose     "%{mutt_leader}k"           ?= attach-key
@@ -100,5 +100,5 @@ _plus_char = '+'
 MUTT.bind index,pager '\Cp'         ?= sidebar-prev
 MUTT.bind index,pager '\Cn'         ?= sidebar-next
 MUTT.bind index,pager '\Co'         ?= sidebar-open
-MUTT.bind index,pager '-'           ?= sidebar-page-up
-MUTT.bind index,pager "%_plus_char" ?= sidebar-page-down
+MUTT.bind index,pager '-'           ?= sidebar-scroll-up
+MUTT.bind index,pager "%_plus_char" ?= sidebar-scroll-down
