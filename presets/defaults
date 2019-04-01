@@ -31,8 +31,8 @@
 # smtp_host and imap_host are in the format: host(:port)?
 # e.g. mail.example.com or mail.example.com:999
 #
-# Optional: goto_account_key, goto_subdir_key, box, imap_type, imap_ssl,
-#           imap_filter, smtp.tls_fingerprint,
+# Optional: goto_account_key, source_account_key, goto_subdir_key, box,
+#           imap_type, imap_ssl, imap_filter, smtp.tls_fingerprint,
 
 :. $MUTTERER_SYSTEM_PRESETS/lib
 
@@ -115,7 +115,9 @@ mutt.postponed                 ?= "\"%postponed\""
 mutt.trash                     ?= "\"%trash\""
 mutt.mbox_type                 ?= Maildir
 goto_account_key               ?= g
+source_account_key             ?= %{goto_account_key}-
 MUTT.macro index,pager %{goto_account_key}%{account_key} ?= "\"<change-folder>$(escape_spaces "%{mutt.spoolfile}")\n\""
+MUTT.macro index,pager %{source_account_key}%{account_key} ?= "\"<enter-command>source ~/.mutterer/configs/_%{id}/muttrc\n\""
 MUTT.folder-hook "\"%{box}/\"/*" ?= source ~/.mutterer/configs/_%{id}/muttrc
 MUTT.'mailboxes ' ?~= "$([[ ! -d "%{box}" ]] || \
     echo "\`find \"%box\" -maxdepth 1 -mindepth 0 -type d -printf \"'%box/%""P' \"\`")"
