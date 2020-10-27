@@ -3,16 +3,14 @@
 # keys_for_account account_id
 keys_for_account()
 {
-    local IFS=$'\n'
-    printf '%s' "${!settings[*]}" | grep "^accounts\.$1\."
+    printf '%s\n' "${!settings[@]}" | grep "^accounts\.$1\."
 }
 
 # all_accounts_except [accounts...]
 all_accounts_except()
 {
-    local IFS=$'\n'
-    printf '%s\n%s' "${!accounts[*]}" "$(sort <<<"$*" | uniq)" |
-    sort | uniq -u
+    comm -23 <(printf '%s\n' "${!accounts[@]}" | sort) \
+             <(printf '%s\n' "$@" | sort -u)
 }
 
 # escape_spaces text : escape spaces with <quote-char> as required by

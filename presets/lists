@@ -55,15 +55,14 @@
 :list_move_macro()
 :{
 :    local id=$1 box=$2 k
-:    local IFS=$'\n'
-:    for k in $(keys_for_account "$id"); do
-:        if [[ ! "$k" =~ ^accounts\.$id\.lists\.([a-zA-Z0-9_-]+)$ ]]; then continue; fi
+:    while read -r k; do
+:        [[ "$k" =~ ^accounts\.$id\.lists\.([a-zA-Z0-9_-]+)$ ]] || continue
 :        local list=${BASH_REMATCH[1]}
 :        mkdir -p "$box/$list"/{cur,new,tmp}
 :        local tags=$(extract_tags "${settings[$k]}")
 :        local tag_exprs=$(for t in $tags; do printf " | ~s '^%s'" "$t"; done)
 :        list_move_with_expr "=$id/$list" "(%L $list $tag_exprs)"
-:    done
+:    done < <(keys_for_account "$id")
 :    echo -n "<tag-pattern><kill-line>~N<enter>"
 :    echo -n "<tag-prefix-cond><set-flag>O<end-cond>"
 :    echo -n "<untag-pattern><kill-line>~A<enter>"
@@ -81,22 +80,20 @@
 :list_subs()
 :{
 :    local id=$1 k
-:    local IFS=$'\n'
-:    for k in $(keys_for_account "$id"); do
+:    while read -r k; do
 :        [[ "$k" =~ ^accounts\.$id\.lists\.([a-zA-Z0-9_-]+)$ ]] || continue
 :        local list=${BASH_REMATCH[1]}
 :        local addrs=$(extract_addresses "${settings[$k]}")
 :        if [[ -n "$addrs" ]]; then
 :            printf '%s\n\n' "$list $addrs"
 :        fi
-:    done
+:    done < <(keys_for_account "$id")
 :}
 
 # accounts_using_lists
 :accounts_using_lists()
 :{
-:    local IFS=$'\n'
-:    printf '%s' "${!settings[*]}" |
+:    printf '%s\n' "${!settings[@]}" |
 :    grep -o '^accounts\.[a-zA-Z0-9_]\+\.lists\.[a-zA-Z0-9_-]\+$' |
 :    sed 's/^accounts\.\([a-zA-Z0-9_]\+\)\..*$/\1/' |
 :    sort | uniq
