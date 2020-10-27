@@ -96,7 +96,7 @@
 :    printf '%s\n' "${!settings[@]}" |
 :    grep -o '^accounts\.[a-zA-Z0-9_]\+\.lists\.[a-zA-Z0-9_-]\+$' |
 :    sed 's/^accounts\.\([a-zA-Z0-9_]\+\)\..*$/\1/' |
-:    sort | uniq
+:    sort -u
 :}
 
 :accounts_not_using_lists()
