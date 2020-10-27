@@ -57,7 +57,7 @@
 :    local id=$1 box=$2 k
 :    local IFS=$'\n'
 :    for k in $(keys_for_account "$id"); do
-:        if [[ ! "$k" =~ ^accounts\.$id\.lists\.([a-zA-Z0-9_]+)$ ]]; then continue; fi
+:        if [[ ! "$k" =~ ^accounts\.$id\.lists\.([a-zA-Z0-9_-]+)$ ]]; then continue; fi
 :        local list=${BASH_REMATCH[1]}
 :        mkdir -p "$box/$list"/{cur,new,tmp}
 :        local tags=$(extract_tags "${settings[$k]}")
@@ -83,7 +83,7 @@
 :    local id=$1 k
 :    local IFS=$'\n'
 :    for k in $(keys_for_account "$id"); do
-:        [[ "$k" =~ ^accounts\.$id\.lists\.([a-zA-Z0-9_]+)$ ]] || continue
+:        [[ "$k" =~ ^accounts\.$id\.lists\.([a-zA-Z0-9_-]+)$ ]] || continue
 :        local list=${BASH_REMATCH[1]}
 :        local addrs=$(extract_addresses "${settings[$k]}")
 :        if [[ -n "$addrs" ]]; then
@@ -97,7 +97,7 @@
 :{
 :    local IFS=$'\n'
 :    printf '%s' "${!settings[*]}" |
-:    grep -o '^accounts\.[a-zA-Z0-9_]\+\.lists\.[a-zA-Z0-9_]\+$' |
+:    grep -o '^accounts\.[a-zA-Z0-9_]\+\.lists\.[a-zA-Z0-9_-]\+$' |
 :    sed 's/^accounts\.\([a-zA-Z0-9_]\+\)\..*$/\1/' |
 :    sort | uniq
 :}
