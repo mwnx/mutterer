@@ -5,7 +5,8 @@
 #     [account John]
 #     name = John Doe
 #     ...
-#     lists.Mutt = mutt-dev@mutt.org mutt-users@mutt.org
+#     lists.Mutt = mutt-dev@mutt.org mutt-users@mutt.org \
+#                  "=h\ 'List-Id:\ <mutt-users.mutt.org>'"
 #     lists.SECURITY = debian-security-announce@lists.debian.org
 #     lists.Haskell = haskell-cafe@haskell.org \
 #                     '[Haskell-cafe]'
@@ -13,14 +14,16 @@
 # This will automatically setup a shortcut (",A" by default) to filter
 # John's inbox; this shortcut has no effect when used from an account with
 # no lists.* configured.
-# A mailing list can be matched by either the list's email address or a tag
-# that appears in the subject line, specified in the form '[tag]', as in the
-# example.
-# Notice how we use two addresses for "Mutt". They will both be considered
-# as belonging to the same mailing list.
-# It will also setup a hook to automatically call this shortcut when
-# entering that user's inbox (in other words, there is rarely any need to
-# use that shortcut at all).
+# A mailing list can be matched by either the list's email address (e.g.
+# "mutt-dev@mutt.org"), a tag that appears in the subject line, specified in
+# the form '[tag]' (e.g. "[Haskell-cafe]"), or any mutt "pattern modifier"
+# with spaces escaped (e.g. "=h\ 'List-Id:\ <mutt-users.mutt.org>'", which
+# tests the "List-Id:" header field).
+# Notice how we use two addresses and a pattern for "Mutt". If any of these
+# matches, the email will be considered as belonging to the mailing list.
+# A hook will also be setup to automatically call this shortcut when
+# entering the user's inbox (so there will rarely be any need to use the
+# aforementioned ",A" shortcut at all).
 #
 # Messages belonging to a mailing list are saved in %folder/list_name (e.g.
 # John/Mutt). They are deleted from the inbox unless they are part of a
@@ -44,11 +47,27 @@
 :    echo -n "<tag-prefix-cond><save-message><kill-line>$folder<enter>y<end-cond>"
 :}
 
-# extract_tags words
-:extract_tags()
+# read_words words > newline-separated words
+:read_words()
 :{
-:    sed 's/\s/\n/g' <<< "$1" |
-:    grep '^\[.*\]$'
+:    local words
+:    read -a words <<< "$1"
+:    printf '%s\n' "${words[@]}"
+:}
+
+# extract_patterns words > '|'-separated patterns (starting with '|')
+:extract_patterns()
+:{
+:    read_words "$1" |
+:    sed -n -e "s/^\[.*\]$/~s '^\0'/" -e "s/^[~=%(]/| \0/p"
+:}
+
+# extract_addresses words
+:extract_addresses()
+:{
+:    read_words "$1" |
+:    grep -v '^\[.*\]$\|^[~=%(]' |
+:    tr '\n' ' '
 :}
 
 # list_move_macro %id %box
@@ -59,21 +78,12 @@
 :        [[ "$k" =~ ^accounts\.$id\.lists\.([a-zA-Z0-9_-]+)$ ]] || continue
 :        local list=${BASH_REMATCH[1]}
 :        mkdir -p "$box/$list"/{cur,new,tmp}
-:        local tags=$(extract_tags "${settings[$k]}")
-:        local tag_exprs=$(for t in $tags; do printf " | ~s '^%s'" "$t"; done)
-:        list_move_with_expr "=$id/$list" "(%L $list $tag_exprs)"
+:        local patterns=$(extract_patterns "${settings[$k]}")
+:        list_move_with_expr "=$id/$list" "(%L $list $patterns)"
 :    done < <(keys_for_account "$id")
 :    echo -n "<tag-pattern><kill-line>~N<enter>"
 :    echo -n "<tag-prefix-cond><set-flag>O<end-cond>"
 :    echo -n "<untag-pattern><kill-line>~A<enter>"
-:}
-
-# extract_addresses words
-:extract_addresses()
-:{
-:    sed 's/\s/\n/g' <<< "$1" |
-:    grep -v '^\[.*\]$' |
-:    tr '\n' ' '
 :}
 
 # list_subs %id
